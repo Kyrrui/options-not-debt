@@ -9,10 +9,10 @@
 """
 
 interface IOracleHub:
-    def is_registered(asset: address) -> bool: view
+    def is_registered(asset: bytes32) -> bool: view
 
 event SeriesCreated:
-    asset: indexed(address)
+    asset: indexed(bytes32)
     series: indexed(address)
     strike: uint256
     maturity: uint256
@@ -43,10 +43,10 @@ def __init__(hub: address, series_blueprint: address, token_blueprint: address):
 
 
 @external
-def create_series(asset: address, strike: uint256, maturity: uint256) -> address:
+def create_series(asset: bytes32, strike: uint256, maturity: uint256) -> address:
     """
     @notice Create (or fetch) the P/N series for (asset, strike, maturity).
-    @param asset    Chainlink ASSET/USD aggregator address, or address(0) for USD.
+    @param asset    OracleHub asset id, or empty(bytes32) for USD.
     @param strike   asset units per ETH, 1e18-scaled.
     @param maturity unix timestamp of option maturity.
     """

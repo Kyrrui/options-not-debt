@@ -42,7 +42,7 @@ contract HalmosVerification is SymTest, Test {
             deployCode(FACTORY_ART, abi.encode(address(hub), seriesBP, tokenBP))
         );
         series = IOptionSeries(
-            factory.create_series(address(0), STRIKE, block.timestamp + 28 days)
+            factory.create_series(bytes32(0), STRIKE, block.timestamp + 28 days)
         );
         P = IOptionToken(series.P());
         N = IOptionToken(series.N());
@@ -167,7 +167,7 @@ contract HalmosVerification is SymTest, Test {
             )
         ));
         IOptionSeries s2 = IOptionSeries(
-            factory.create_series(address(0), STRIKE, s1.MATURITY())
+            factory.create_series(bytes32(0), STRIKE, s1.MATURITY())
         );
 
         vm.warp(s1.MATURITY());

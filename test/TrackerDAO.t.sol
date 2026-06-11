@@ -9,7 +9,7 @@ contract TrackerDAOTest is Base {
 
     function setUp() public override {
         super.setUp();
-        dao = newDao(address(0), "Soft Peg USD", "spUSD"); // ETH-backed USD tracker
+        dao = newDao(USD, "Soft Peg USD", "spUSD"); // ETH-backed USD tracker
     }
 
     function _active() internal view returns (IOptionSeries) {
@@ -289,7 +289,7 @@ contract TrackerDAOTest is Base {
     // ------------------------------------------------------------- RWA -----
 
     function test_rwaTracker_gold() public {
-        ITrackerDAO gold = newDao(address(xauFeed), "Soft Peg Gold", "spXAU");
+        ITrackerDAO gold = newDao(xauId, "Soft Peg Gold", "spXAU");
         vm.prank(bob);
         gold.deposit{value: 10 ether}(); // x(XAU) = 1e18: 1 ETH = 1 oz
 
@@ -310,5 +310,106 @@ contract TrackerDAOTest is Base {
         uint256 p = bound(uint256(px), strike, 1_000_000); // any price >= strike
         ethFeed.setAnswer(int256(p) * 1e8);
         assertEq(dao.share_price(), 1e18, "peg must hold above strike");
+    }
+
+    // --------------------------------------------- review regressions ------
+
+    /// @notice constructor must reject configs where the roll rule already
+    ///         covers a freshly created series (genesis self-roll brick)
+    function deployBrickConfig() external {
+        deployCode(
+            "TrackerDAO",
+            abi.encode(
+                "Brick", "BRK", address(hub), address(factory), USD,
+                uint256(28 days), uint256(7 days),
+                uint256(3e18),   // ROLL_TRIGGER
+                uint256(0.5e18), // STRIKE_RATIO: 0.5 * 3 = 1.5 > 0.95 -> brick
+                uint256(1 days), uint256(0.02e18)
+            )
+        );
+    }
+
+    function test_constructor_revertsGenesisSelfRoll() public {
+        vm.expectRevert();
+        this.deployBrickConfig();
+    }
+
+    /// @notice the sell_p ramp must restart at the discount end on every
+    ///         fresh harvest — a 1-wei leftover buffer must not let later
+    ///         harvests be bought instantly at max premium
+    function test_sellP_rampRestartsOnSecondHarvest() public {
+        test_rollFallback_settleAndHarvest(); // harvest #1: 5 ETH buffer
+        IOptionSeries s = _active();
+
+        // drain most (not all) of the buffer at the saturated-ramp price
+        vm.warp(block.timestamp + 2 days); // ramp fully saturated
+        refreshFeeds();
+        vm.startPrank(carol);
+        s.split{value: 4 ether}();
+        IOptionToken(s.P()).approve(address(dao), type(uint256).max);
+        dao.sell_p(4 ether);
+        vm.stopPrank();
+        assertGt(dao.eth_buffer(), 0, "buffer must stay nonzero");
+
+        // saturated quote pays the max premium: intrinsic * (1 + MAX_EDGE)
+        assertEq(dao.p_quote(1 ether), uint256(1 ether) * 5 / 10 * 102 / 100);
+
+        // jump past the active series' maturity with the buffer still >0:
+        // one sync settles it, harvests (#2), rolls, and finalizes
+        vm.warp(block.timestamp + 21 days);
+        refreshFeeds();
+        dao.sync();
+
+        // immediately after the harvest the DAO bids the DISCOUNT end again;
+        // without the re-anchor it would still quote the saturated premium
+        assertEq(dao.p_quote(1 ether), uint256(1 ether) * 5 / 10 * 98 / 100);
+    }
+
+    /// @notice cross-function reentrancy: reentering deposit() from the ETH
+    ///         send inside redeem() must be blocked by the global lock
+    function test_reentrancy_redeemToDeposit_blocked() public {
+        test_rollFallback_settleAndHarvest(); // gives the DAO an ETH buffer
+
+        Reenterer attacker = new Reenterer(dao);
+        vm.deal(address(attacker), 2 ether);
+        attacker.depositFor{value: 1 ether}();
+
+        attacker.arm();
+        vm.expectRevert(); // raw_call bubbles the blocked reentrant deposit
+        attacker.redeemAll();
+
+        attacker.disarm();
+        attacker.redeemAll(); // sanity: works when not attacking
+    }
+}
+
+contract Reenterer {
+    ITrackerDAO internal dao;
+    bool internal attack;
+
+    constructor(ITrackerDAO dao_) {
+        dao = dao_;
+    }
+
+    function depositFor() external payable {
+        dao.deposit{value: msg.value}();
+    }
+
+    function arm() external {
+        attack = true;
+    }
+
+    function disarm() external {
+        attack = false;
+    }
+
+    function redeemAll() external {
+        dao.redeem(dao.balanceOf(address(this)));
+    }
+
+    receive() external payable {
+        if (attack) {
+            dao.deposit{value: msg.value}();
+        }
     }
 }

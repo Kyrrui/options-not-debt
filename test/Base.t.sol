@@ -17,6 +17,8 @@ abstract contract Base is Test {
     ISeriesFactory internal factory;
     MockV3Aggregator internal ethFeed; // ETH/USD, 8 decimals
     MockV3Aggregator internal xauFeed; // XAU/USD, 8 decimals
+    bytes32 internal constant USD = bytes32(0);
+    bytes32 internal xauId;
 
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
@@ -34,7 +36,7 @@ abstract contract Base is Test {
         factory = ISeriesFactory(
             deployCode("SeriesFactory", abi.encode(address(hub), seriesBlueprint, tokenBlueprint))
         );
-        hub.register(address(xauFeed), XAU_HEARTBEAT, "XAU");
+        xauId = hub.register(address(xauFeed), XAU_HEARTBEAT, "XAU");
 
         vm.deal(alice, 1_000_000 ether);
         vm.deal(bob, 1_000_000 ether);
@@ -47,12 +49,12 @@ abstract contract Base is Test {
         xauFeed.setAnswer(xauFeed.answer());
     }
 
-    /// @dev USD series helper: asset = address(0)
+    /// @dev USD series helper: asset = bytes32(0)
     function newUsdSeries(uint256 strike, uint256 term) internal returns (IOptionSeries) {
-        return IOptionSeries(factory.create_series(address(0), strike, block.timestamp + term));
+        return IOptionSeries(factory.create_series(USD, strike, block.timestamp + term));
     }
 
-    function newDao(address asset, string memory name, string memory symbol)
+    function newDao(bytes32 asset, string memory name, string memory symbol)
         internal
         returns (ITrackerDAO)
     {

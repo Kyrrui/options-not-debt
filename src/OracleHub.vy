@@ -8,7 +8,16 @@
 @dev    Per ethresear.ch t/25036 the system only needs a *slow*, pull-based
         oracle: prices are read lazily, once, at settlement. This hub never
         pushes prices and never triggers liquidations (there are none).
-        The sentinel asset address(0) denotes USD itself (x = ETH/USD).
+
+        Assets are keyed by id = keccak256(aggregator, heartbeat), NOT by
+        the aggregator address alone. This makes registration squat-proof:
+        any (feed, staleness-tolerance) combination can be registered by
+        anyone, registrations are immutable and content-addressed, and
+        integrators (series creators, wrapper DAOs) opt into exactly the
+        configuration they trust. A maliciously loose or tight heartbeat
+        registration occupies only its own id and blocks nobody.
+
+        The sentinel id empty(bytes32) denotes USD itself (x = ETH/USD).
 """
 
 interface AggregatorV3:
@@ -16,11 +25,13 @@ interface AggregatorV3:
     def latestRoundData() -> (uint80, int256, uint256, uint256, uint80): view
 
 event AssetRegistered:
-    asset: indexed(address)
+    asset: indexed(bytes32)
+    aggregator: indexed(address)
     heartbeat: uint256
     symbol: String[32]
 
 struct FeedConfig:
+    aggregator: address
     heartbeat: uint256
     symbol: String[32]
 
@@ -31,8 +42,8 @@ MAX_HEARTBEAT: constant(uint256) = 7 * 24 * 3600
 ETH_USD_FEED: public(immutable(address))
 ETH_USD_HEARTBEAT: public(immutable(uint256))
 
-# asset id == address of its Chainlink ASSET/USD aggregator
-feeds: public(HashMap[address, FeedConfig])
+# asset id == keccak256(abi_encode(aggregator, heartbeat))
+feeds: public(HashMap[bytes32, FeedConfig])
 
 
 @deploy
@@ -43,34 +54,52 @@ def __init__(eth_usd_feed: address, eth_usd_heartbeat: uint256):
     ETH_USD_HEARTBEAT = eth_usd_heartbeat
 
 
+@pure
 @external
-def register(aggregator: address, heartbeat: uint256, symbol: String[32]):
+def asset_id(aggregator: address, heartbeat: uint256) -> bytes32:
+    return self._asset_id(aggregator, heartbeat)
+
+
+@pure
+@internal
+def _asset_id(aggregator: address, heartbeat: uint256) -> bytes32:
+    return keccak256(abi_encode(aggregator, heartbeat))
+
+
+@external
+def register(aggregator: address, heartbeat: uint256, symbol: String[32]) -> bytes32:
     """
-    @notice Permissionlessly register any Chainlink ASSET/USD aggregator as a
-            trackable RWA. Registration validates the feed answers sanely.
+    @notice Permissionlessly register a (Chainlink ASSET/USD aggregator,
+            heartbeat) pair as a trackable RWA. Content-addressed and
+            idempotent: the same pair always maps to the same asset id and
+            an existing registration is simply returned. Registration
+            probes the feed for a positive, fresh, <=18-decimals answer.
+    @return the asset id to use in SeriesFactory / TrackerDAO.
     """
     assert aggregator != empty(address), "zero feed"
-    assert aggregator != ETH_USD_FEED, "is eth feed"
-    assert self.feeds[aggregator].heartbeat == 0, "registered"
     assert heartbeat >= MIN_HEARTBEAT and heartbeat <= MAX_HEARTBEAT, "heartbeat"
-    # probe the feed: must answer with a positive, fresh, <=18-decimals price
+    asset: bytes32 = self._asset_id(aggregator, heartbeat)
+    assert asset != empty(bytes32), "sentinel collision"
+    if self.feeds[asset].aggregator != empty(address):
+        return asset  # idempotent
     price: uint256 = self._read(aggregator, heartbeat)
     assert price > 0, "bad feed"
-    self.feeds[aggregator] = FeedConfig(heartbeat=heartbeat, symbol=symbol)
-    log AssetRegistered(asset=aggregator, heartbeat=heartbeat, symbol=symbol)
+    self.feeds[asset] = FeedConfig(aggregator=aggregator, heartbeat=heartbeat, symbol=symbol)
+    log AssetRegistered(asset=asset, aggregator=aggregator, heartbeat=heartbeat, symbol=symbol)
+    return asset
 
 
 @view
 @external
-def is_registered(asset: address) -> bool:
-    if asset == empty(address):
+def is_registered(asset: bytes32) -> bool:
+    if asset == empty(bytes32):
         return True  # USD sentinel
-    return self.feeds[asset].heartbeat != 0
+    return self.feeds[asset].aggregator != empty(address)
 
 
 @view
 @external
-def latest_price(asset: address) -> uint256:
+def latest_price(asset: bytes32) -> uint256:
     """
     @notice x = ETH price denominated in `asset` units, 1e18-scaled.
             Reverts if either feed is stale or unregistered.
@@ -80,13 +109,13 @@ def latest_price(asset: address) -> uint256:
 
 @view
 @internal
-def _price(asset: address) -> uint256:
+def _price(asset: bytes32) -> uint256:
     eth_usd: uint256 = self._read(ETH_USD_FEED, ETH_USD_HEARTBEAT)
-    if asset == empty(address):
+    if asset == empty(bytes32):
         return eth_usd
-    heartbeat: uint256 = self.feeds[asset].heartbeat
-    assert heartbeat != 0, "unregistered"
-    asset_usd: uint256 = self._read(asset, heartbeat)
+    cfg: FeedConfig = self.feeds[asset]
+    assert cfg.aggregator != empty(address), "unregistered"
+    asset_usd: uint256 = self._read(cfg.aggregator, cfg.heartbeat)
     x: uint256 = eth_usd * UNIT // asset_usd
     assert x > 0, "zero index"
     return x

@@ -38,13 +38,16 @@ FACTORY=$(forge create src/SeriesFactory.vy:SeriesFactory "${CREATE_FLAGS[@]}" -
 echo "OracleHub:     $HUB"
 echo "SeriesFactory: $FACTORY"
 
-echo "== register gold (permissionless)"
+echo "== register gold (permissionless, content-addressed by feed+heartbeat)"
 cast send "$HUB" 'register(address,uint256,string)' "$XAU_FEED" 86400 "XAU" --rpc-url "$RPC" --private-key "$KEY" > /dev/null
+XAU_ID=$(cast call "$HUB" 'asset_id(address,uint256)(bytes32)' "$XAU_FEED" 86400 --rpc-url "$RPC")
+USD_ID=0x0000000000000000000000000000000000000000000000000000000000000000
+echo "XAU asset id: $XAU_ID"
 
 echo "== wrapper DAOs (term 28d, roll window 7d, trigger 1.5x, strike 0.5x, auction 1d, edge 2%)"
 DAO_ARGS=("$HUB" "$FACTORY" 2419200 604800 1500000000000000000 500000000000000000 86400 20000000000000000)
-SPUSD=$(forge create src/TrackerDAO.vy:TrackerDAO "${CREATE_FLAGS[@]}" --constructor-args "Soft Peg USD" "spUSD" "${DAO_ARGS[0]}" "${DAO_ARGS[1]}" 0x0000000000000000000000000000000000000000 "${DAO_ARGS[@]:2}" | deployed)
-SPXAU=$(forge create src/TrackerDAO.vy:TrackerDAO "${CREATE_FLAGS[@]}" --constructor-args "Soft Peg Gold" "spXAU" "${DAO_ARGS[0]}" "${DAO_ARGS[1]}" "$XAU_FEED" "${DAO_ARGS[@]:2}" | deployed)
+SPUSD=$(forge create src/TrackerDAO.vy:TrackerDAO "${CREATE_FLAGS[@]}" --constructor-args "Soft Peg USD" "spUSD" "${DAO_ARGS[0]}" "${DAO_ARGS[1]}" "$USD_ID" "${DAO_ARGS[@]:2}" | deployed)
+SPXAU=$(forge create src/TrackerDAO.vy:TrackerDAO "${CREATE_FLAGS[@]}" --constructor-args "Soft Peg Gold" "spXAU" "${DAO_ARGS[0]}" "${DAO_ARGS[1]}" "$XAU_ID" "${DAO_ARGS[@]:2}" | deployed)
 echo "spUSD DAO: $SPUSD"
 echo "spXAU DAO: $SPXAU"
 

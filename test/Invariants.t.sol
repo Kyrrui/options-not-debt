@@ -229,7 +229,7 @@ contract DaoInvariantTest is Base {
 
     function setUp() public override {
         super.setUp();
-        dao = newDao(address(0), "Soft Peg USD", "spUSD");
+        dao = newDao(USD, "Soft Peg USD", "spUSD");
         handler = new DaoHandler(dao, ethFeed);
         targetContract(address(handler));
     }

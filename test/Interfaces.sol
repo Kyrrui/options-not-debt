@@ -19,17 +19,26 @@ interface IOptionToken {
 }
 
 interface IOracleHub {
+    struct FeedConfig {
+        address aggregator;
+        uint256 heartbeat;
+        string symbol;
+    }
+
     function ETH_USD_FEED() external view returns (address);
     function ETH_USD_HEARTBEAT() external view returns (uint256);
-    function feeds(address) external view returns (uint256 heartbeat, string memory symbol);
-    function register(address aggregator, uint256 heartbeat, string calldata symbol) external;
-    function is_registered(address asset) external view returns (bool);
-    function latest_price(address asset) external view returns (uint256);
+    function feeds(bytes32) external view returns (FeedConfig memory);
+    function asset_id(address aggregator, uint256 heartbeat) external pure returns (bytes32);
+    function register(address aggregator, uint256 heartbeat, string calldata symbol)
+        external
+        returns (bytes32);
+    function is_registered(bytes32 asset) external view returns (bool);
+    function latest_price(bytes32 asset) external view returns (uint256);
 }
 
 interface IOptionSeries {
     function HUB() external view returns (address);
-    function ASSET() external view returns (address);
+    function ASSET() external view returns (bytes32);
     function STRIKE() external view returns (uint256);
     function MATURITY() external view returns (uint256);
     function P() external view returns (address);
@@ -52,7 +61,7 @@ interface ISeriesFactory {
     function series_count() external view returns (uint256);
     function series_list(uint256) external view returns (address);
     function is_series(address) external view returns (bool);
-    function create_series(address asset, uint256 strike, uint256 maturity) external returns (address);
+    function create_series(bytes32 asset, uint256 strike, uint256 maturity) external returns (address);
 }
 
 interface ITrackerDAO {
@@ -61,7 +70,7 @@ interface ITrackerDAO {
     function DECIMALS() external view returns (uint8);
     function HUB() external view returns (address);
     function FACTORY() external view returns (address);
-    function ASSET() external view returns (address);
+    function ASSET() external view returns (bytes32);
     function TERM() external view returns (uint256);
     function ROLL_WINDOW() external view returns (uint256);
     function ROLL_TRIGGER() external view returns (uint256);

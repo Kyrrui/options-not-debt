@@ -58,10 +58,10 @@ interface ISeries:
     def redeem_p(amount: uint256): nonpayable
 
 interface IOracleHub:
-    def latest_price(asset: address) -> uint256: view
+    def latest_price(asset: bytes32) -> uint256: view
 
 interface IFactory:
-    def create_series(asset: address, strike: uint256, maturity: uint256) -> address: nonpayable
+    def create_series(asset: bytes32, strike: uint256, maturity: uint256) -> address: nonpayable
 
 # ---------------------------------------------------------------- ERC20 ----
 
@@ -122,7 +122,7 @@ DECIMALS: public(constant(uint8)) = 18
 
 HUB: public(immutable(address))
 FACTORY: public(immutable(address))
-ASSET: public(immutable(address))           # Chainlink feed id; address(0) = USD
+ASSET: public(immutable(bytes32))           # OracleHub asset id; empty(bytes32) = USD
 
 TERM: public(immutable(uint256))            # lifetime of each series
 ROLL_WINDOW: public(immutable(uint256))     # roll this long before maturity
@@ -150,7 +150,7 @@ def __init__(
     symbol: String[32],
     hub: address,
     factory: address,
-    asset: address,
+    asset: bytes32,
     term: uint256,
     roll_window: uint256,
     roll_trigger: uint256,
@@ -163,6 +163,11 @@ def __init__(
     assert term >= 2 * 3600, "term too short"
     assert roll_trigger >= UNIT and roll_trigger <= 4 * UNIT, "bad trigger"
     assert strike_ratio > 0 and strike_ratio < UNIT, "bad ratio"
+    # a freshly created series sits at index/strike = 1/strike_ratio; the
+    # roll rule must not already cover that point or sync() would try to
+    # roll the genesis series into itself in the same block and brick the
+    # DAO forever (factory dedupe returns the identical series)
+    assert strike_ratio * roll_trigger <= UNIT * UNIT * 95 // 100, "trigger overlaps genesis"
     assert auction_dur >= 600 and auction_dur <= 30 * 24 * 3600, "bad auction"
     assert max_edge < UNIT // 5, "bad edge"
     NAME = name
@@ -425,6 +430,10 @@ def _harvest(series: address):
         extcall ISeries(series).redeem_p(pa)
         got = pa * pp // UNIT
         self.eth_buffer += got
+        # freshly harvested ETH starts a NEW discount->premium ramp; without
+        # this, a leftover 1-wei buffer keeps the old anchor saturated and
+        # every later harvest would sell at max premium immediately
+        self.buy_started = block.timestamp
     log Harvested(series=series, eth_out=got)
 
 

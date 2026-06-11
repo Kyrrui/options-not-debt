@@ -23,7 +23,7 @@
 """
 
 interface IOracleHub:
-    def latest_price(asset: address) -> uint256: view
+    def latest_price(asset: bytes32) -> uint256: view
 
 interface IOptionToken:
     def mint(to: address, amount: uint256): nonpayable
@@ -50,7 +50,7 @@ event Redeem:
 UNIT: constant(uint256) = 10**18
 
 HUB: public(immutable(address))
-ASSET: public(immutable(address))         # Chainlink ASSET/USD aggregator; address(0) = USD
+ASSET: public(immutable(bytes32))         # OracleHub asset id; empty(bytes32) = USD
 STRIKE: public(immutable(uint256))        # asset units per ETH, 1e18-scaled
 MATURITY: public(immutable(uint256))      # unix timestamp
 P: public(immutable(address))             # tracking leg token
@@ -62,7 +62,7 @@ payout_p: public(uint256)                 # wei owed per 1e18 units of P
 
 
 @deploy
-def __init__(hub: address, asset: address, strike: uint256, maturity: uint256, token_blueprint: address):
+def __init__(hub: address, asset: bytes32, strike: uint256, maturity: uint256, token_blueprint: address):
     assert hub != empty(address), "zero hub"
     assert strike > 0, "zero strike"
     assert maturity > block.timestamp, "past maturity"
