@@ -35,4 +35,5 @@ jobs:
       - name: symbolic proofs
         env:
           HALMOS_ALLOW_DOWNLOAD: "1"
-        run: halmos --contract HalmosVerification --solver-timeout-assertion 0
+        # halmos performs its own AST-bearing build; do not forge build first
+        run: halmos --contract HalmosVerification --solver bitwuzla --solver-timeout-assertion 0

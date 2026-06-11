@@ -132,7 +132,8 @@ Three layers, weakest to strongest:
 | `check_payoutMonotone` | ∀ x₁ ≤ x₂: P's payout is non-increasing in the index |
 
 ```bash
-halmos --contract HalmosVerification --solver-timeout-assertion 0
+# note: halmos needs AST-bearing artifacts; run from a clean state
+forge clean && halmos --contract HalmosVerification --solver bitwuzla --solver-timeout-assertion 0
 ```
 
 *Scope honesty: "formally verified" means these stated theorems are machine-proven
@@ -148,7 +149,7 @@ forge build
 forge test                      # 67 tests: unit + fuzz + invariants
 
 # formal verification (pip install halmos)
-halmos --contract HalmosVerification --solver-timeout-assertion 0
+forge clean && halmos --contract HalmosVerification --solver bitwuzla --solver-timeout-assertion 0
 
 # local node end-to-end
 anvil                           # terminal 1
