@@ -1,8 +1,8 @@
 # Draft reply for ethresear.ch t/25036 — review before posting
 
-> Status: DRAFT. Sepolia addresses are placeholders until the deployment
-> lands. Post under Kyrrui's account after review. Tone: research
-> contribution, not launch announcement.
+> Status: READY FOR REVIEW. Sepolia deployment live and verified. Post under
+> Kyrrui's account after review. Tone: research contribution, not launch
+> announcement.
 
 ---
 
@@ -69,12 +69,19 @@ compose symbolic 256-bit division chains — the hardest SMT query class — and
 are still grinding with no counterexample found; they're covered meanwhile by
 the invariant suites.
 
-**Sepolia deployment** (real Chainlink feeds, ETH/USD + XAU/USD):
+**Sepolia deployment** (live Chainlink ETH/USD + XAU/USD feeds, all contracts
+source-verified on Blockscout — full table in the repo's
+[docs/deployments.md](https://github.com/Kyrrui/options-not-debt/blob/main/docs/deployments.md)):
 
-- OracleHub: `<HUB>`
-- SeriesFactory: `<FACTORY>`
-- spUSD wrapper: `<SPUSD>`
-- spXAU wrapper: `<SPXAU>`
+- OracleHub: [`0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62`](https://eth-sepolia.blockscout.com/address/0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62)
+- SeriesFactory: [`0x4Be934A244c25034546CF4a265db51b8943D248D`](https://eth-sepolia.blockscout.com/address/0x4Be934A244c25034546CF4a265db51b8943D248D)
+- spUSD wrapper: [`0xf35cFEf2Db231c84EEd74fd988918DE1f9062201`](https://eth-sepolia.blockscout.com/address/0xf35cFEf2Db231c84EEd74fd988918DE1f9062201)
+- spXAU wrapper: [`0xBc9E4b726dE6DDCAFaE3f41FBA6411E6679F4916`](https://eth-sepolia.blockscout.com/address/0xBc9E4b726dE6DDCAFaE3f41FBA6411E6679F4916)
+
+At deployment (ETH $1,676 / XAU $4,227 → x ≈ 0.397 oz per ETH) the gold
+wrapper's genesis series struck at x/2 and the first deposit minted shares at
+`share_price == 1e18` exactly: one share, one ounce, priced off the live
+feeds with ETH as the only collateral in the system.
 
 **Open questions for the thread**
 
