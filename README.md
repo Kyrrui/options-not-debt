@@ -9,9 +9,10 @@ An implementation of Vitalik Buterin's design from
 (ethresear.ch, June 2026), incorporating refinements from the discussion thread.
 
 Contracts are **Vyper 0.4.3**, tests are **Foundry** (unit + fuzz + stateful
-invariant testing), and the core theorems are **formally verified with
-[Halmos](https://github.com/a16z/halmos)** symbolic execution against the compiled
-Vyper bytecode.
+invariant testing), and the core theorems are machine-checked with
+**[Halmos](https://github.com/a16z/halmos)** symbolic execution against the
+compiled Vyper bytecode (see the per-theorem status table below — the
+nonlinear-arithmetic proofs are long-running and marked accordingly).
 
 ---
 
@@ -120,26 +121,34 @@ Three layers, weakest to strongest:
 3. **Halmos symbolic proofs** ([test/Halmos.t.sol](test/Halmos.t.sol)) — proven for
    **all** inputs in the stated ranges against the compiled Vyper bytecode:
 
-| Theorem | Statement |
-|---|---|
-| `check_payoutBounded` | ∀ price: settled P payout ≤ 1 ETH/unit |
-| `check_pValueNeverExceedsStrike` | ∀ price: P's settled value in asset units ≤ S (the peg's hard upper bound) |
-| `check_conservation` | ∀ price, ∀ amount: redeeming P+N returns ≤ locked ETH, shortfall < 2 wei (**no bad debt, ever**) |
-| `check_splitMergeExact` | ∀ amount: split→merge is value-exact |
-| `check_splitFullyCollateralized` | ∀ amount: split mints equal legs, 1:1 ETH-backed |
-| `check_erc20TransferPreservesSupply` | ∀ amounts: transfers conserve supply and balances |
-| `check_onlyMinterMints` | ∀ caller ≠ series: minting reverts |
-| `check_payoutMonotone` | ∀ x₁ ≤ x₂: P's payout is non-increasing in the index |
+| Theorem | Statement | Status |
+|---|---|---|
+| `check_payoutBounded` | ∀ price: settled P payout ≤ 1 ETH/unit | ✅ proven |
+| `check_splitMergeExact` | ∀ amount: split→merge is value-exact | ✅ proven |
+| `check_splitFullyCollateralized` | ∀ amount: split mints equal legs, 1:1 ETH-backed | ✅ proven |
+| `check_erc20TransferPreservesSupply` | ∀ amounts: transfers conserve supply and balances | ✅ proven |
+| `check_onlyMinterMints` | ∀ caller ≠ series: minting reverts | ✅ proven |
+| `check_pValueNeverExceedsStrike` | ∀ price: P's settled value in asset units ≤ S (the peg's hard upper bound) | ⏳ solver running |
+| `check_conservation` | ∀ price, ∀ amount: redeeming P+N returns ≤ locked ETH, shortfall < 2 wei (**no bad debt**) | ⏳ solver running |
+| `check_payoutMonotone` | ∀ x₁ ≤ x₂: P's payout is non-increasing in the index | ⏳ solver running |
+
+The three ⏳ theorems compose symbolic 256-bit division chains
+(`payout = S·1e18/x` feeding further mul-divs) — the hardest query class for
+SMT solvers. They have produced **no counterexample**; the solver is still
+closing the UNSAT proof (long-running even on bitwuzla). Until they finish,
+the claims rest on the invariant suites (128k randomized calls each, zero
+violations) and the proven `check_payoutBounded` lemma. This table is updated
+as proofs complete.
 
 ```bash
 # note: halmos needs AST-bearing artifacts; run from a clean state
 forge clean && halmos --contract HalmosVerification --solver bitwuzla --solver-timeout-assertion 0
 ```
 
-*Scope honesty: "formally verified" means these stated theorems are machine-proven
-over the compiled bytecode within the stated input bounds. It does not mean every
-contract behavior is proven — the DAO's economic layer is covered by the invariant
-suites, not symbolic proofs.*
+*Scope honesty: "formally verified" means the ✅ theorems are machine-proven
+over the compiled bytecode within the stated input bounds — nothing more. It
+does not mean every contract behavior is proven: the DAO's economic layer is
+covered by the invariant suites, not symbolic proofs.*
 
 ## Running it
 
