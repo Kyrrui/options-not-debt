@@ -22,8 +22,14 @@
         fixes the settlement index forever.
 """
 
+struct FeedConfig:
+    aggregator: address
+    heartbeat: uint256
+    symbol: String[32]
+
 interface IOracleHub:
     def latest_price(asset: bytes32) -> uint256: view
+    def feeds(asset: bytes32) -> FeedConfig: view
 
 interface IOptionToken:
     def mint(to: address, amount: uint256): nonpayable
@@ -70,8 +76,75 @@ def __init__(hub: address, asset: bytes32, strike: uint256, maturity: uint256, t
     ASSET = asset
     STRIKE = strike
     MATURITY = maturity
-    P = create_from_blueprint(token_blueprint, "Option Tracking Leg", "OPT-P", self, code_offset=3)
-    N = create_from_blueprint(token_blueprint, "Option Leveraged Leg", "OPT-N", self, code_offset=3)
+    # trader-legible symbology: each leg's wallet symbol carries its full
+    # contract terms (leg, asset, strike, expiry as YYMMDD), e.g.
+    # "P-USD-1250-260710" — vintages from different rolls never collide
+    sym: String[32] = "USD"
+    if asset != empty(bytes32):
+        cfg: FeedConfig = staticcall IOracleHub(hub).feeds(asset)
+        if len(cfg.symbol) != 0:
+            sym = cfg.symbol
+        else:
+            sym = "ASSET"
+    terms: String[512] = concat(sym, "-", self._strike_str(strike), "-", self._date_str(maturity))
+    P = create_from_blueprint(
+        token_blueprint,
+        concat("Tracking P ", terms),
+        concat("P-", terms),
+        self,
+        code_offset=3,
+    )
+    N = create_from_blueprint(
+        token_blueprint,
+        concat("Leverage N ", terms),
+        concat("N-", terms),
+        self,
+        code_offset=3,
+    )
+
+
+@internal
+@pure
+def _pad2(x: uint256) -> String[79]:
+    if x < 10:
+        return concat("0", uint2str(x))
+    return uint2str(x)
+
+
+@internal
+@pure
+def _date_str(ts: uint256) -> String[240]:
+    """YYMMDD from a unix timestamp (Howard Hinnant's civil-from-days)."""
+    z: uint256 = ts // 86400 + 719468
+    era: uint256 = z // 146097
+    doe: uint256 = z % 146097
+    yoe: uint256 = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    y: uint256 = yoe + era * 400
+    doy: uint256 = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp: uint256 = (5 * doy + 2) // 153
+    d: uint256 = doy - (153 * mp + 2) // 5 + 1
+    m: uint256 = mp + 3
+    if mp >= 10:
+        m = mp - 9
+    if m <= 2:
+        y += 1
+    return concat(self._pad2(y % 100), self._pad2(m), self._pad2(d))
+
+
+@internal
+@pure
+def _strike_str(s: uint256) -> String[160]:
+    """Strike (1e18-scaled asset units per ETH) with trader-grade precision:
+    integers above 100, three decimals below."""
+    ip: uint256 = s // 10**18
+    if ip >= 100:
+        return uint2str(ip)
+    frac: uint256 = (s % 10**18) // 10**15
+    if frac < 10:
+        return concat(uint2str(ip), ".00", uint2str(frac))
+    if frac < 100:
+        return concat(uint2str(ip), ".0", uint2str(frac))
+    return concat(uint2str(ip), ".", uint2str(frac))
 
 
 @external

@@ -22,8 +22,8 @@ event Approval:
     spender: indexed(address)
     value: uint256
 
-NAME: public(immutable(String[64]))
-SYMBOL: public(immutable(String[32]))
+NAME: public(immutable(String[512]))
+SYMBOL: public(immutable(String[512]))
 DECIMALS: public(constant(uint8)) = 18
 MINTER: public(immutable(address))
 
@@ -33,7 +33,7 @@ allowance: public(HashMap[address, HashMap[address, uint256]])
 
 
 @deploy
-def __init__(name: String[64], symbol: String[32], minter: address):
+def __init__(name: String[512], symbol: String[512], minter: address):
     NAME = name
     SYMBOL = symbol
     MINTER = minter

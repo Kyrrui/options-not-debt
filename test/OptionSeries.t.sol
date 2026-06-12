@@ -17,6 +17,31 @@ contract OptionSeriesTest is Base {
         N = IOptionToken(series.N());
     }
 
+    // -------------------------------------------------------- symbology ----
+
+    /// @notice every leg's wallet symbol carries its full contract terms
+    ///         (leg, asset, strike, expiry) so vintages never collide
+    function test_tokenSymbology() public {
+        // setUp series: USD, strike 1250e18, maturity 2026-06-25
+        assertEq(P.SYMBOL(), "P-USD-1250-260625");
+        assertEq(N.SYMBOL(), "N-USD-1250-260625");
+        assertEq(P.NAME(), "Tracking P USD-1250-260625");
+        assertEq(N.NAME(), "Leverage N USD-1250-260625");
+
+        // fractional strike + registered asset symbol from the hub
+        IOptionSeries xau = IOptionSeries(
+            factory.create_series(xauId, 0.5e18, block.timestamp + 14 days)
+        );
+        assertEq(IOptionToken(xau.P()).SYMBOL(), "P-XAU-0.500-260611");
+        assertEq(IOptionToken(xau.N()).SYMBOL(), "N-XAU-0.500-260611");
+
+        // sub-unit strike with leading zero padding
+        IOptionSeries tiny = IOptionSeries(
+            factory.create_series(USD, 0.001e18, block.timestamp + 14 days)
+        );
+        assertEq(IOptionToken(tiny.P()).SYMBOL(), "P-USD-0.001-260611");
+    }
+
     // ------------------------------------------------------------ split ----
 
     function test_split_mintsEqualLegs() public {
