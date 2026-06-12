@@ -310,6 +310,75 @@ the trust check — factory-created means exact-blueprint bytecode, no
 automatically. Curate the default view (canonical spUSD/spXAU pinned
 first, community pegs below, sorted by TVL) but never hide entries.
 
+### 3.D Uniswap pools on tracker cards (secondary market for sp tokens)
+
+**Scope rule (hard):** pools are surfaced and creatable for **tracker (sp)
+tokens only — never for P/N series legs.** P/N expire and re-mint every
+roll; AMM pools on expiring assets fragment liquidity and strand LPs on
+dead vintages. The venue for P/N is the DAO's own auctions (§3.B). Any
+pool UI on a series page is a spec violation.
+
+**Pool detection & display (build FIRST — v1):**
+- Detect via Uniswap v3 `factory.getPool(spToken, WETH, fee)` across fee
+  tiers [500, 3000, 10000]; if several exist, feature the deepest by
+  in-range liquidity and list the rest. Pull the chain's canonical Uniswap
+  v3 addresses (factory, NonfungiblePositionManager, WETH9) from Uniswap's
+  official deployments registry into config — do not hardcode from memory.
+- Tracker card/detail shows, side by side and clearly labeled:
+  - **Market**: pool spot price + 30-min TWAP (from `slot0` /
+    `observe`), pool TVL, fee tier.
+  - **NAV**: `share_price()` via the §2.1 stale-safe path.
+  - **Basis**: (market − NAV)/NAV as "x.x% discount/premium to NAV" with
+    an explainer tooltip (mandatory copy, see below).
+  - Swap deep-link to the Uniswap app with chain + token addresses
+    prefilled (deep-link in v1; an embedded swap widget is v1.1+ at the
+    builder's discretion).
+- **Mandatory basis explainer** (verbatim or equivalent): "Market price
+  can drift from NAV. Above NAV it corrects fast (anyone can mint at NAV
+  and sell). Below NAV it corrects slowly (redemption yields P tokens
+  that pay out at series settlement). A small, persistent discount under
+  stress is normal arbitrage mechanics — not a depeg." Without this,
+  every visible discount becomes a support ticket.
+- **Peg chart**: once a pool exists, add a second line — market price vs
+  the NAV line — sourced from the backend (§12.3 addition below). This
+  is the strongest trust artifact the UI has; treat gaps/divergence as
+  first-class data, never smooth them.
+- No-pool state: "No market yet — be the first to seed liquidity" CTA
+  into the create flow. Pool-exists-but-empty (zero in-range liquidity):
+  treat as no-market, show seed CTA, hide spot price (a priceless pool
+  renders garbage numbers).
+
+**Pool creation/seed flow (v1.1):** wallet-direct through Uniswap's
+canonical NonfungiblePositionManager (designed for EOA calls — the §2.3
+custody trap does not apply, but ONLY the canonical NPM is exempt):
+1. Gate on oracle freshness; derive the init price from `share_price()`
+   NAV. Compute `sqrtPriceX96` with full-precision bigint, respecting
+   v3's token0/token1 address-sort order (price may need inversion —
+   classic footgun, unit-test it). HARD warning before signing: "a pool
+   initialized at the wrong price is arbitraged within one block; you
+   will lose the difference."
+2. Single transaction via NPM `multicall`:
+   `createAndInitializePoolIfNecessary` + `mint`. Default: 0.3% fee tier
+   (sp/WETH is structurally a volatile USD-vs-ETH pair, NOT a stable
+   pool — do not offer the 0.05% "stable" framing), full-range position
+   (min/max usable ticks for the tier). Custom range behind an
+   "advanced" toggle with an out-of-range-drift warning.
+3. UI computes the NAV-ratio amounts of spToken + WETH, offers an ETH→
+   WETH wrap step, takes exact approvals to the NPM, applies user
+   slippage settings on mint.
+4. Disclosures before signing: LPing sp/WETH carries ~50% ETH exposure
+   (this is not a stable position); below-strike drift affects the pool
+   too; testnet tokens have no value.
+
+**Backend additions (§12.3 / §12.4):** the indexer samples, per tracker
+per snapshot tick: pool address, spot, 30-min TWAP, in-range liquidity,
+basis vs NAV — persisted into the history series and returned in
+`/api/trackers` (`pool: {address, feeTier, tvl, spot, twap30m, basis}`
+or `null`) and `/api/trackers/:addr/history` (market series alongside
+NAV). New alert: |basis| > 3% sustained for > 1h. The keeper does NOT
+trade pools — display and alerting only; any pool market-making is a
+future operator-MM concern, out of scope.
+
 ## 4. Architecture
 
 - **Stack**: Vite + React + TS, wagmi v2 + viem, RainbowKit/ConnectKit,
