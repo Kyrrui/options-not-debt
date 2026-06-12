@@ -128,17 +128,23 @@ Three layers, weakest to strongest:
 | `check_splitFullyCollateralized` | ∀ amount: split mints equal legs, 1:1 ETH-backed | ✅ proven |
 | `check_erc20TransferPreservesSupply` | ∀ amounts: transfers conserve supply and balances | ✅ proven |
 | `check_onlyMinterMints` | ∀ caller ≠ series: minting reverts | ✅ proven |
-| `check_pValueNeverExceedsStrike` | ∀ price: P's settled value in asset units ≤ S (the peg's hard upper bound) | ⏳ solver running |
-| `check_conservation` | ∀ price, ∀ amount: redeeming P+N returns ≤ locked ETH, shortfall < 2 wei (**no bad debt**) | ⏳ solver running |
-| `check_payoutMonotone` | ∀ x₁ ≤ x₂: P's payout is non-increasing in the index | ⏳ solver running |
+| `check_pValueAtOrBelowStrike` | ∀ price ≤ strike: P pays in full; value ≤ S | ✅ proven |
+| `check_payoutMonotone_belowStrike` | monotonicity, both prices ≤ strike | ✅ proven |
+| `check_payoutMonotone_acrossStrike` | monotonicity across the strike | ✅ proven |
+| `check_pValueAboveStrike` | ∀ price > strike: payout·x ≤ S·1e18 (the peg's hard cap) | ⏳ solver running |
+| `check_payoutMonotone_aboveStrike` | monotonicity, both prices > strike | ⏳ solver running |
+| `check_redeemConservation` | ∀ payout ≤ 1e18, ∀ amount: redeeming P+N ≤ locked ETH, shortfall < 2 wei (**no bad debt**, chains with `payoutBounded`) | ⏳ solver running |
 
-The three ⏳ theorems compose symbolic 256-bit division chains
-(`payout = S·1e18/x` feeding further mul-divs) — the hardest query class for
-SMT solvers. They have produced **no counterexample**; the solver is still
-closing the UNSAT proof (long-running even on bitwuzla). Until they finish,
-the claims rest on the invariant suites (128k randomized calls each, zero
-violations) and the proven `check_payoutBounded` lemma. This table is updated
-as proofs complete.
+The original monolithic theorems composed symbolic 256-bit division chains —
+a query class SMT solvers do not close in practice (>13h, no result). They
+were decomposed into the equivalent lemma set above; the lemmas marked ⏳
+are the remaining division facts, still running with **no counterexample
+found**. Until they finish, those claims rest on the invariant suites (128k
+randomized calls each, zero violations) and the proven lemmas. The
+monolithic forms are kept in the test file (`_deep` suffix) for reference.
+This table is updated as proofs complete; reproduce any row with
+`forge clean && halmos --contract HalmosVerification --function <name>
+--solver bitwuzla --solver-timeout-assertion 0`.
 
 ```bash
 # note: halmos needs AST-bearing artifacts; run from a clean state
