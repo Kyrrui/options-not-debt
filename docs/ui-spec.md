@@ -144,13 +144,16 @@ from live oracle + timestamp; neither takes min-out/max-in.
   P+N is mergeable back to ETH); final step offers "fill max coverable by
   balance/allowance".
 
-### 2.5 Token metadata collides — label everything UI-side
-Every series deploys tokens named identically ("Option Tracking Leg"/"OPT-P",
-"Option Leveraged Leg"/"OPT-N"). A user with positions across two rolls holds
-indistinguishable tokens in their wallet. Rules: derive labels from series
-params — "P spXAU @0.198oz · Jul 9" — resolving token → series via
-`MINTER()` + factory enumeration; warn at deposit that wallet-displayed
-symbols collide; offer `wallet_watchAsset` with that caveat.
+### 2.5 Token metadata (RESOLVED on-chain in the v3 deployment)
+P/N tokens now self-describe: symbols are composed on-chain at series
+creation as `P-<ASSET>-<STRIKE>-<YYMMDD>` / `N-...` (e.g.
+`P-XAU-0.198-260710`), names as "Tracking P …"/"Leverage N …" — vintages
+from different rolls never collide in wallets. UI rules that remain:
+offer `wallet_watchAsset` after deposit (now safe and useful); UI labels
+may still enrich (add the tracker name, USD value); resolve token → series
+via `MINTER()` when needed. The strike in the symbol is 3-decimal
+truncated — for exact terms always read `STRIKE()` from the series, never
+parse the symbol.
 
 ### 2.6 Empty-revert-data failures (Vyper checked arithmetic)
 The most common real failures produce NO revert string: insufficient
