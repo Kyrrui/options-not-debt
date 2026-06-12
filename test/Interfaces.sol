@@ -64,6 +64,27 @@ interface ISeriesFactory {
     function create_series(bytes32 asset, uint256 strike, uint256 maturity) external returns (address);
 }
 
+interface ITrackerFactory {
+    function HUB() external view returns (address);
+    function SERIES_FACTORY() external view returns (address);
+    function TRACKER_BLUEPRINT() external view returns (address);
+    function tracker_by_key(bytes32) external view returns (address);
+    function tracker_count() external view returns (uint256);
+    function tracker_list(uint256) external view returns (address);
+    function is_tracker(address) external view returns (bool);
+    function create_tracker(
+        string calldata name,
+        string calldata symbol,
+        bytes32 asset,
+        uint256 term,
+        uint256 rollWindow,
+        uint256 rollTrigger,
+        uint256 strikeRatio,
+        uint256 auctionDur,
+        uint256 maxEdge
+    ) external returns (address);
+}
+
 interface ITrackerDAO {
     function NAME() external view returns (string memory);
     function SYMBOL() external view returns (string memory);

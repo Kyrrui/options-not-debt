@@ -43,10 +43,19 @@ XAU_ID=$(cast call "$HUB" 'asset_id(address,uint256)(bytes32)' "$XAU_FEED" "$XAU
 USD_ID=0x0000000000000000000000000000000000000000000000000000000000000000
 echo "XAU asset id: $XAU_ID"
 
-echo "== wrapper DAOs (term 28d, roll window 7d, trigger 1.5x, strike 0.5x, auction 1d, edge 2%)"
+echo "== tracker factory (permissionless soft-peg creation)"
+TRACKER_BP_INIT=$(python script/blueprint_initcode.py out/TrackerDAO.vy/TrackerDAO.json)
+TRACKER_BP=$(cast send --rpc-url "$RPC" --private-key "$KEY" --json --create "$TRACKER_BP_INIT" | grep -oE '"contractAddress":"0x[0-9a-fA-F]{40}"' | cut -d'"' -f4)
+TRACKER_FACTORY=$(forge create src/TrackerFactory.vy:TrackerFactory "${CREATE_FLAGS[@]}" --constructor-args "$HUB" "$FACTORY" "$TRACKER_BP" | deployed)
+echo "tracker blueprint: $TRACKER_BP"
+echo "TrackerFactory:    $TRACKER_FACTORY"
+
+echo "== wrapper DAOs via factory (term 28d, window 7d, trigger 1.5x, strike 0.5x, auction 1d, edge 2%)"
 DAO_TAIL=(2419200 604800 1500000000000000000 500000000000000000 86400 20000000000000000)
-SPUSD=$(forge create src/TrackerDAO.vy:TrackerDAO "${CREATE_FLAGS[@]}" --constructor-args "Soft Peg USD" "spUSD" "$HUB" "$FACTORY" "$USD_ID" "${DAO_TAIL[@]}" | deployed)
-SPXAU=$(forge create src/TrackerDAO.vy:TrackerDAO "${CREATE_FLAGS[@]}" --constructor-args "Soft Peg Gold" "spXAU" "$HUB" "$FACTORY" "$XAU_ID" "${DAO_TAIL[@]}" | deployed)
+cast send "$TRACKER_FACTORY" 'create_tracker(string,string,bytes32,uint256,uint256,uint256,uint256,uint256,uint256)' "Soft Peg USD" "spUSD" "$USD_ID" "${DAO_TAIL[@]}" --rpc-url "$RPC" --private-key "$KEY" > /dev/null
+cast send "$TRACKER_FACTORY" 'create_tracker(string,string,bytes32,uint256,uint256,uint256,uint256,uint256,uint256)' "Soft Peg Gold" "spXAU" "$XAU_ID" "${DAO_TAIL[@]}" --rpc-url "$RPC" --private-key "$KEY" > /dev/null
+SPUSD=$(cast call "$TRACKER_FACTORY" 'tracker_list(uint256)(address)' 0 --rpc-url "$RPC")
+SPXAU=$(cast call "$TRACKER_FACTORY" 'tracker_list(uint256)(address)' 1 --rpc-url "$RPC")
 echo "spUSD DAO: $SPUSD"
 echo "spXAU DAO: $SPXAU"
 

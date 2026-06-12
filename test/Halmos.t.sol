@@ -64,20 +64,73 @@ contract HalmosVerification is SymTest, Test {
         assert(series.payout_p() <= UNIT);
     }
 
-    /// @notice ∀ oracle price: P's settled value, measured in asset units,
-    ///         never exceeds the strike — the soft peg's hard upper bound.
-    ///         (payout_p * x <= STRIKE * 1e18)
-    function check_pValueNeverExceedsStrike(uint256 answer) public {
+    // ------------------------------------------------------------------
+    // The no-bad-debt theorem, proven as a LEMMA CHAIN. The monolithic
+    // form (check_conservation_deep below) composes a symbolic 256-bit
+    // division with two further mul-divs — a query class SMT solvers do
+    // not close in practice (>13h with yices and bitwuzla, no result).
+    // The decomposition proves the identical end-to-end property over the
+    // same deployed bytecode:
+    //   Step 1 (check_payoutBounded, proven): settle() can only ever
+    //          write payout_p <= 1e18, for every oracle price.
+    //   Step 2 (check_redeemConservation, below): for EVERY settled state
+    //          with payout_p <= 1e18 — i.e. every state step 1 permits —
+    //          redeeming both legs returns at most the locked ETH with
+    //          shortfall < 2 wei.
+    // ------------------------------------------------------------------
+
+    /// @notice ∀ payout_p <= 1e18, ∀ amount: redeeming P then N returns at
+    ///         most the locked ETH, shortfall < 2 wei. The settled state is
+    ///         installed directly via vm.store (slots from `vyper -f
+    ///         layout`: settled=0, payout_p=2); check_payoutBounded proves
+    ///         these are exactly the states settle() can produce.
+    function check_redeemConservation(uint256 pp, uint256 amount) public {
+        vm.assume(pp <= UNIT);
+        vm.assume(amount >= 1 && amount <= type(uint96).max);
+        vm.deal(alice, amount);
+        vm.prank(alice);
+        series.split{value: amount}();
+
+        vm.store(address(series), bytes32(uint256(0)), bytes32(uint256(1))); // settled = true
+        vm.store(address(series), bytes32(uint256(2)), bytes32(pp));         // payout_p = pp
+
+        vm.prank(alice);
+        series.redeem_p(amount);
+        vm.prank(alice);
+        series.redeem_n(amount);
+
+        uint256 got = alice.balance;
+        assert(got <= amount);
+        assert(amount - got < 2);
+    }
+
+    /// @notice ∀ price with x <= STRIKE: P pays out in full (1 ETH/unit)
+    ///         and its asset-unit value x never exceeds the strike.
+    function check_pValueAtOrBelowStrike(uint256 answer) public {
         vm.assume(answer >= 1 && answer <= 1e40);
         _settleAt(answer);
         uint256 x = series.settlement_index();
+        vm.assume(x <= STRIKE);
+        assert(series.payout_p() == UNIT);
         assert(series.payout_p() * x <= STRIKE * UNIT);
     }
 
-    /// @notice ∀ price, ∀ amount: redeeming both legs returns at most the
-    ///         locked ETH, and the rounding shortfall is below 2 wei.
-    ///         This is the no-bad-debt / no-liquidation theorem.
-    function check_conservation(uint256 answer, uint256 amount) public {
+    /// @notice ∀ price with x > STRIKE: payout_p = floor(S·1e18/x), so
+    ///         payout_p · x <= STRIKE · 1e18 — the soft peg's hard upper
+    ///         bound (P can never be worth more than S asset units).
+    function check_pValueAboveStrike(uint256 answer) public {
+        vm.assume(answer >= 1 && answer <= 1e40);
+        _settleAt(answer);
+        uint256 x = series.settlement_index();
+        vm.assume(x > STRIKE);
+        assert(series.payout_p() * x <= STRIKE * UNIT);
+    }
+
+    /// @notice Monolithic form of the conservation theorem. Equivalent to
+    ///         check_payoutBounded + check_redeemConservation chained.
+    ///         Solver-intractable in practice; kept for reference and NOT
+    ///         run in CI.
+    function check_conservation_deep(uint256 answer, uint256 amount) public {
         vm.assume(answer >= 1 && answer <= 1e40);
         vm.assume(amount >= 1 && amount <= type(uint96).max);
         vm.deal(alice, amount);
@@ -149,33 +202,54 @@ contract HalmosVerification is SymTest, Test {
         assert(!ok);
     }
 
-    /// @notice ∀ two prices x1 <= x2: P's payout is monotonically
-    ///         non-increasing in the settlement index (and N's payoff is
-    ///         therefore non-decreasing): the legs can never both lose.
-    function check_payoutMonotone(uint256 a1, uint256 a2) public {
-        vm.assume(a1 >= 1 && a1 <= 1e40);
-        vm.assume(a2 >= a1 && a2 <= 1e40);
+    // ------------------------------------------------------------------
+    // Payout monotonicity (∀ x1 <= x2: payout_p(x1) >= payout_p(x2)),
+    // split by strike region so each query is a single canonical division
+    // fact instead of two composed divisions. Settles the SAME series
+    // twice by clearing the settled flag (slot 0) between runs — both
+    // settlements execute the real bytecode.
+    // ------------------------------------------------------------------
 
-        IOptionSeries s1 = series;
-        // an identical second series from a sibling factory
-        ISeriesFactory factory = ISeriesFactory(deployCode(
-            FACTORY_ART,
-            abi.encode(
-                address(hub),
-                Blueprint.deployBlueprint(vm.getCode(SERIES_ART)),
-                Blueprint.deployBlueprint(vm.getCode(TOKEN_ART))
-            )
-        ));
-        IOptionSeries s2 = IOptionSeries(
-            factory.create_series(bytes32(0), STRIKE, s1.MATURITY())
-        );
-
-        vm.warp(s1.MATURITY());
-        ethFeed.setAnswer(int256(a1));
-        s1.settle();
+    function _settleTwice(uint256 a1, uint256 a2)
+        internal
+        returns (uint256 x1, uint256 pp1, uint256 x2, uint256 pp2)
+    {
+        _settleAt(a1);
+        x1 = series.settlement_index();
+        pp1 = series.payout_p();
+        vm.store(address(series), bytes32(uint256(0)), bytes32(uint256(0))); // un-settle
         ethFeed.setAnswer(int256(a2));
-        s2.settle();
+        series.settle();
+        x2 = series.settlement_index();
+        pp2 = series.payout_p();
+        vm.assume(x1 <= x2);
+    }
 
-        assert(s1.payout_p() >= s2.payout_p());
+    /// @notice both indices at/below strike: payout pinned at 1e18.
+    function check_payoutMonotone_belowStrike(uint256 a1, uint256 a2) public {
+        vm.assume(a1 >= 1 && a1 <= 1e40 && a2 >= 1 && a2 <= 1e40);
+        (uint256 x1, uint256 pp1, uint256 x2, uint256 pp2) = _settleTwice(a1, a2);
+        vm.assume(x2 <= STRIKE);
+        assert(pp1 == UNIT && pp2 == UNIT);
+        x1; // silence
+    }
+
+    /// @notice index crosses the strike: full payout >= partial payout.
+    function check_payoutMonotone_acrossStrike(uint256 a1, uint256 a2) public {
+        vm.assume(a1 >= 1 && a1 <= 1e40 && a2 >= 1 && a2 <= 1e40);
+        (uint256 x1, uint256 pp1, , uint256 pp2) = _settleTwice(a1, a2);
+        vm.assume(x1 <= STRIKE && series.settlement_index() > STRIKE);
+        assert(pp1 == UNIT);
+        assert(pp2 <= UNIT);
+        assert(pp1 >= pp2);
+    }
+
+    /// @notice both indices above strike: floor(S·U/x) is non-increasing
+    ///         in x — the canonical division anti-monotonicity fact.
+    function check_payoutMonotone_aboveStrike(uint256 a1, uint256 a2) public {
+        vm.assume(a1 >= 1 && a1 <= 1e40 && a2 >= 1 && a2 <= 1e40);
+        (uint256 x1, uint256 pp1, , uint256 pp2) = _settleTwice(a1, a2);
+        vm.assume(x1 > STRIKE);
+        assert(pp1 >= pp2);
     }
 }

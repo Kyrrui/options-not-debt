@@ -164,7 +164,8 @@ failed precheck named.
 
 ### 3.A Saver (default experience)
 
-**Trackers list (landing)** — card per DAO from static config:
+**Trackers list (landing)** — card per DAO, enumerated from the
+TrackerFactory (see §3.C "Tracker discovery"; canonical pegs pinned first):
 - share price vs 1.000 target + 30d sparkline (per §2.2 pipeline)
 - TVL (ETH + asset units + **USD value** — read the asset's USD feed
   directly; savers think in USD even for gold)
@@ -278,24 +279,33 @@ dedupe (exact dedupe essentially never fires since maturity is
 timestamp-precise); offer maturity rounding to 00:00 UTC to encourage
 convergence on shared series.
 
-**Deploy tracker wizard** (v2): inline validation = ALL constructor asserts
-(§7 constants table) PLUS three cross-contract checks the constructor does
-NOT perform, each an irrecoverable brick on a no-admin contract:
-1. `hub.is_registered(asset)` must be true (else every deposit/sync reverts
-   "unregistered" forever);
-2. hub field must equal `factory.HUB()` (auto-fill, read-only);
-3. `term` ≤ factory MAX_TERM (5y) — series creation would revert.
-Defaults = read spUSD/spXAU immutables. Economic-sanity warnings:
-`roll_window > term/2` (perpetual re-roll churn), `auction_dur >
-roll_window`; pre-deploy summary computes "expected time-driven rolls/year ≈
-365d/(term−roll_window); worst-case annual edge drag ≈ rolls/yr × max_edge".
-Deployment mechanics: ship the compiled TrackerDAO initcode (out/ artifact,
-compiler-pinned to the verified deployments) + viem `deployContract`;
-post-deploy, persist address locally + "add tracker by address" input
-(there is NO on-chain DAO registry — wizard-deployed DAOs are otherwise
-undiscoverable); render with "community-deployed / unvetted" badge after
-duck-typing checks (ASSET/TERM/share_price readable). Note Vyper
-String[64]/String[32] name/symbol limits are byte lengths.
+**Create-a-peg wizard** (NOW v1.1, not v2 — the `TrackerFactory` contract
+makes it a single transaction): the wizard calls
+`TrackerFactory.create_tracker(name, symbol, asset, term, roll_window,
+roll_trigger, strike_ratio, auction_dur, max_edge)` from the user's wallet
+(their gas, ~3.5M). No initcode shipping, no deployContract. The factory
+enforces on-chain what the TrackerDAO constructor cannot: asset must be
+registered in the hub, the hub is injected (never caller-chosen), term fits
+the series factory's bounds. It also dedupes on the parameter set
+(name/symbol are cosmetic, excluded from the key — surface this: "a tracker
+with these parameters already exists as <addr>; yours would be the same
+contract"). The TrackerDAO constructor's own asserts (§7) still apply and
+revert through the factory — mirror them client-side for inline UX.
+Economic-sanity warnings stay client-side: `roll_window > term/2`
+(perpetual re-roll churn), `auction_dur > roll_window`; pre-deploy summary
+computes "expected time-driven rolls/year ≈ 365d/(term−roll_window);
+worst-case annual edge drag ≈ rolls/yr × max_edge". Defaults = the
+canonical spUSD params. Note Vyper String[64]/String[32] name/symbol limits
+are byte lengths. After creation, route the user straight into the
+first-deposit ("seed this tracker") flow.
+
+**Tracker discovery — NO static config needed**: the trackers list is
+enumerated from the factory (`tracker_count` / `tracker_list(i)`, or
+`TrackerCreated` events for creator/metadata), and `is_tracker(addr)` is
+the trust check — factory-created means exact-blueprint bytecode, no
+"unvetted" badge required. User-created pegs appear for every user
+automatically. Curate the default view (canonical spUSD/spXAU pinned
+first, community pegs below, sorted by TVL) but never hide entries.
 
 ## 4. Architecture
 
@@ -312,8 +322,9 @@ String[64]/String[32] name/symbol limits are byte lengths.
   Sepolia-only, fixture-flag them).
 - **Config**: typed `deployments.ts` generated from `docs/deployments.md` —
   **including per-contract deployment block numbers** (add them to
-  deployments.md; required for log scans). v1 tracker discovery is
-  config-only.
+  deployments.md; required for log scans). Tracker discovery is on-chain
+  via the TrackerFactory (§3.C); config carries only the singleton
+  addresses (hub, factories) and pinned/canonical tracker ordering.
 - **Logs**: chunked `getLogs` (free Sepolia RPCs cap ranges ~10k blocks
   regardless of result size) with incremental caching of highest-scanned
   block. Event list: DAO `Deposit, Withdraw, RollStarted, RollFilled,
