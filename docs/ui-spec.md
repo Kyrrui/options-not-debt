@@ -1,11 +1,19 @@
-# UI Specification — options-not-debt frontend
+# App Specification — options-not-debt frontend + operator backend
 
-> Self-contained spec for building the web UI, hardened by a five-perspective
-> review (saver UX, market-maker UX, integrator UX, frontend architecture,
-> contract-completeness audit) against the actual contracts. The implementing
-> session should read this file plus `README.md`, `docs/deployments.md`, and
-> `test/Interfaces.sol` (exact protocol ABIs). Contracts: `src/*.vy`.
-> Sepolia addresses + deployment params: `docs/deployments.md`.
+> Self-contained spec for building the web UI (§0–§11) and the operator
+> backend (§12: keeper, indexer, API, optional market-making). Hardened by a
+> five-perspective review (saver UX, market-maker UX, integrator UX, frontend
+> architecture, contract-completeness audit) against the actual contracts.
+> The implementing session should read this file plus `README.md`,
+> `docs/deployments.md`, and `test/Interfaces.sol` (exact protocol ABIs).
+> Contracts: `src/*.vy`. Sepolia addresses + params: `docs/deployments.md`.
+>
+> Suggested repo shape: a TypeScript monorepo —
+> `packages/protocol` (ABIs, addresses, every §5 formula/predicate as pure
+> bigint functions, tested once against fixtures from the Foundry tests),
+> `apps/web` (frontend), `apps/keeper` (backend worker + API). The §5
+> math being a single shared package is load-bearing: UI previews and
+> keeper decisions must never disagree.
 
 ## 0. Product framing
 
@@ -90,9 +98,11 @@ No event carries the index x; localStorage is empty for first-time visitors
 - Works on Sepolia live feeds; does NOT work against `MockV3Aggregator`
   (no round history) — on anvil, charts may be empty; gate with a fixture
   flag.
-- Fallback if round-walking proves unreliable: a tiny hosted snapshot file /
-  indexer is **in scope for MVP** (this resolves old open-question #3 — the
-  chart is the product; don't ship without it).
+- **Primary source: the operator backend's snapshot API (§12.3)** — the
+  keeper samples NAV/share-price continuously and serves history, solving
+  the first-visitor problem outright. Client-side round-walking is the
+  degraded mode when the API is unreachable (the UI must not hard-depend on
+  the backend; see §12.4).
 - Gaps where feeds were stale render as dashed segments, not interpolation.
 
 ### 2.3 Custody trap: never route writes through Multicall3-style contracts
@@ -412,11 +422,13 @@ There is no `"roll in progress"` string anywhere — do not invent it.
   roll-pending, expired-awaiting-harvest, harvested-buffer, stale-oracle.
 
 ## 10. MVP cut
-- **MVP**: trackers list + detail (peg chart with the §2.2 pipeline or MVP
-  indexer; uninitialized + stale states), deposit (value-split preview, exit
+- **MVP**: trackers list + detail (peg chart fed by the §12.3 snapshot API;
+  uninitialized + stale states), deposit (value-split preview, exit
   disclosure) / redeem (3-row basket + availability matrix), "my legs"
   panel, keeper sync/settle buttons + badges, series explorer (read +
-  settle/merge/redeem), error mapping, read-only mode, Sepolia config.
+  settle/merge/redeem), error mapping, read-only mode, Sepolia config —
+  plus the backend MVP (§12.8): keeper loop, indexer/snapshots, API,
+  alerts. Build `packages/protocol` first; both apps depend on it.
 - **v1.1**: full auctions dashboard with calculators + lockup disclosure,
   split page, registry browser + register/create-series forms, watch-mode
   notifications, EIP-5792 batching where supported.
@@ -425,7 +437,144 @@ There is no `"roll in progress"` string anywhere — do not invent it.
   (splitAndFill/syncAndDeposit), multi-chain, N-leg secondary venue
   integrations, embeddable public peg-status page.
 
-## 11. Resolved decisions (were open; now settled by review)
+## 12. Operator backend (keeper + indexer + API + optional market-making)
+
+**Framing — read this first.** The protocol has NO privileged operator:
+every maintenance call (`sync`, `settle`) is permissionless and the
+contracts grant the backend nothing. The backend is an *operator
+convenience* that (a) keeps trackers healthy without waiting for altruists,
+(b) produces the historical data the frontend's trust surfaces need, and
+(c) optionally market-makes the auctions (the "be your own counterparty"
+bootstrap strategy). Spec it so a third party could run their own instance
+unmodified — "anyone can run the infrastructure" is part of the trust story
+and the keeper binary should be advertised in the repo README.
+
+### 12.1 Worker shape
+- `apps/keeper`: a single long-running Node process (viem wallet client +
+  public client), plain loop — no job framework. Structured logging (pino).
+- Storage: SQLite file (better-sqlite3) for events, snapshots, tx journal.
+  No external infra; the whole backend is one process + one file.
+- Serves the read-only HTTP API (§12.4) from the same process (fastify).
+- Config via one typed env/file: RPC URLs (primary + fallbacks, rotated on
+  failure), poll interval (default 30s), tracker addresses (default: import
+  from `packages/protocol` deployments), gas policy, filler settings,
+  alert webhooks, API port, `DRY_RUN`, kill-switch file path.
+
+### 12.2 Keeper duties (per tracker, every tick)
+1. **Read state bundle** in one multicall (`allowFailure: true`):
+   active/pending series, their STRIKE/MATURITY/settled/payout_p,
+   p_bal(both), eth_buffer, buy_started, roll_started, totalSupply, plus
+   raw `latestRoundData` from both aggregators (freshness per §2.1,
+   dual-feed rule, USD-sentinel resolution).
+2. **Decide** with the §5.3 predicates (from `packages/protocol` — never
+   reimplement). Policy: if the "sync needed" composite predicate is true →
+   the action is `sync()` (it batches settle + roll-start + harvest +
+   finalize + auction-anchor in one call; never call `settle()` directly on
+   a DAO-managed series). One in-flight tx per tracker, max.
+   **Stalled-roll nuance** (verified against the code): `sync()` settles
+   only the ACTIVE series. If a roll goes completely unfilled and the
+   pending series also matures, recovery takes *consecutive* sync passes —
+   each pass settles+harvests the current active and finalize promotes the
+   matured pending into the settle path (active always matures before
+   pending, so this converges; deposits revert `"matured"` during the
+   window). The keeper must therefore re-evaluate immediately after each
+   confirmed sync rather than waiting a full tick, and alert if a tracker
+   needs more than 3 consecutive passes.
+3. **Simulate before send** (`eth_call`). Simulation revert → log INFO and
+   skip the tick. Expected, non-error reverts: another keeper won the race
+   (`already settled`), oracle went stale between read and send
+   (`stale price`). A predicate-true/simulation-revert disagreement that
+   persists ≥3 ticks is a bug → alert.
+4. **Send** with serial nonce management (one key = one instance), gas =
+   estimate × 1.2 under an EIP-1559 fee cap, stuck-tx replacement (same
+   nonce, +12.5% fees) after N blocks, 2-block confirmation, full journal
+   row (intent, sim result, hash, outcome, gas spent).
+5. **Idempotency is free**: predicates derive from chain state, so restarts
+   and concurrent instances are safe — the loser of any race burns one
+   cheap revert. Never queue intents; recompute every tick.
+6. **Non-DAO series** (created by third parties via the factory) are NOT
+   the keeper's job in MVP; settlement of those is permissionless and
+   anyone holding their P/N is incentivized to call it.
+
+### 12.3 Indexer + snapshot duties (same process)
+- **Event ingestion**: chunked `getLogs` from per-contract deployment
+  blocks (§4), persisted cursor, idempotent upserts. Tables mirror the §4
+  event list (including DAO share `Transfer` for supply history).
+- **Snapshot sampler**: every 10 min AND after every ingested DAO event:
+  compute x (raw feeds), NAV, share_price, p_bal, eth_buffer, badges per
+  tracker via `packages/protocol` math → append to `snapshots`. While
+  feeds are stale, snapshot with the last-good x and a `stale: true` flag
+  (renders as dashed segments).
+- **Backfill on first run**: seed history by round-walking `getRoundData`
+  (phase-boundary handling per §2.2) combined with event-replayed holdings;
+  best effort, gaps acceptable.
+- This makes the backend the **primary chart source** for §2.2; the API
+  responses carry `as_of` block + timestamp on every figure.
+
+### 12.4 HTTP API (read-only, public, CORS for the web app)
+- `GET /api/trackers` — card data: latest snapshot, badges, freshness per
+  feed, stale-safe share price/NAV with `as_of`.
+- `GET /api/trackers/:address/history?from&to&resolution` — chart series.
+- `GET /api/trackers/:address/events?cursor` — activity feed.
+- `GET /api/auctions` — live roll/sell_p auctions with current quotes,
+  edge, deadlines, size-remaining (live reads, not events), `as_of` block.
+- `GET /api/health` — keeper liveness, last tick, last action, wallet gas
+  balance, RPC status, DRY_RUN flag.
+- **No write endpoints, no auth, no user data — ever.** All writes go
+  user-wallet → chain. The frontend must degrade gracefully to direct-chain
+  reads (minus history) when the API is down.
+
+### 12.5 Optional market-making module (off by default; v1.1)
+The operator-as-counterparty strategy. Capital: a configured float on the
+keeper key (or a second key), hard caps: `maxEthPerFill`,
+`maxTotalInventoryEth`, `dailyGasCapEth`.
+- **Roll filler**: when a roll is live and
+  `edge_net = edge − gas/notional ≥ minEdgeBps`: re-quote `roll_quote`
+  (view = truth), split `required_new × (1 + headroom)` ETH at the pending
+  series, approve **exact**, `fill_roll`. Post-fill inventory: old-P (hold;
+  redeem after old-series settlement) + new-N (hold; leveraged-ETH
+  exposure — counted against inventory cap).
+- **Buffer filler (sell_p)**: when sell_p is live and `mult ≥ 1e18 +
+  minEdgeBps` (DAO paying a premium): split, approve exact, `sell_p`.
+- **Inventory housekeeping** (each tick): merge any matching same-series
+  P+N pairs back to ETH (free exit); `redeem_p`/`redeem_n` any holdings of
+  settled series; mark remaining inventory to oracle intrinsic and report
+  PnL in `/api/health`.
+- Risk framing in config docs: the filler is structurally long ETH via N;
+  caps are the only risk control; this module is for bootstrap, not yield.
+
+### 12.6 Keys, safety, alerting
+- Hot key holds gas + optional filler float ONLY. The protocol grants it no
+  privileges; compromise loses the float, nothing systemic. Keystore or env
+  PK; never commit; document rotation (just swap the key — no on-chain
+  state).
+- `DRY_RUN=true` logs every intended tx without sending — the default in
+  CI and the first deploy.
+- Kill switch: touch-file or env flag checked every tick.
+- Alerts (Discord/Telegram webhook): needed-action unexecuted > X min;
+  wallet below gas floor; feed stale beyond expected market-hours window;
+  share_price < drift threshold (default 0.97 — peg stress, page a human);
+  persistent sim/predicate disagreement; filler cap breaches; RPC failover
+  events.
+
+### 12.7 Backend testing
+- Same anvil fixtures as §9 (`script/deploy-local.sh` + warp + re-poke
+  feeds). Integration tests drive the scenarios and assert keeper behavior:
+  roll trigger → one sync; maturity → settle+harvest+finalize in one sync;
+  healthy → zero txs; stale feeds → zero txs + alert; two keepers racing →
+  exactly one effective action, loser logs INFO.
+- Chaos: kill RPC mid-tick (resume from cursor, no duplicate snapshots),
+  restart mid-roll (no duplicate intents).
+- Filler: simulated fills must reproduce §3.B profit identities to the wei.
+
+### 12.8 Backend MVP cut
+- **MVP**: keeper loop (sync policy) + event ingestion + snapshot sampler +
+  the five API routes + staleness/gas/drift alerts + DRY_RUN + kill switch.
+- **v1.1**: market-making module + inventory housekeeping + PnL reporting.
+- **v2**: multi-instance redundancy (per-key), Prometheus metrics,
+  multi-chain, public "run your own keeper" docker image + docs.
+
+## 13. Resolved decisions (were open; now settled by review)
 1. Batching: sequential stepper baseline; EIP-5792 when available; NO
    generic multicall for custody flows (§2.3). Periphery router = v2.
 2. Returned N legs: v1 ships "keep" + explainer + "my legs" panel; no
