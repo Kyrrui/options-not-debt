@@ -17,6 +17,18 @@
 
 ## 0. Product framing
 
+**Brand: Gimbal.** The frontend and operator stack ship under the name
+"Gimbal" (a gimbal keeps its payload level while everything around it
+pitches and rolls — what the wrapper does to your exposure while ETH swings
+and strikes roll underneath). Tagline: **"Stable through every swing."**
+ENS: `gimbal.eth` (secure it before launch; trademark screen still
+recommended). Tracker tokens keep the deployed scheme — **spUSD, spXAU,
+spNVDA** ("sp" = soft peg) — productized as "spXAU — Soft Peg Gold". The
+protocol layer remains unbranded/neutral in copy ("built on options, not
+debt" in the footer, linking the contracts repo and the ethresear.ch
+thread); Gimbal is *a* frontend to a permissionless primitive, not its
+owner — keep that separation in all wording.
+
 Three jobs, in priority order:
 
 1. **Trust through legibility** — every safety claim (full collateralization,
@@ -581,5 +593,7 @@ keeper key (or a second key), hard caps: `maxEthPerFill`,
    auto-sell (no venue).
 3. Chart data: §2.2 pipeline; hosted snapshot/indexer pulled INTO MVP if
    round-walking is unreliable on the chosen RPC.
-4. Naming: product name per tracker ("spXAU — Soft Peg Gold"), protocol
-   name in footer ("built on options, not debt").
+4. Naming: the app is **Gimbal** (gimbal.eth; tagline "Stable through
+   every swing"); tracker product names "spXAU — Soft Peg Gold" etc.;
+   footer credits the unbranded protocol layer ("built on options, not
+   debt") with repo + thread links. See §0.
