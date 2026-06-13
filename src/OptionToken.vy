@@ -33,10 +33,30 @@ allowance: public(HashMap[address, HashMap[address, uint256]])
 
 
 @deploy
-def __init__(name: String[512], symbol: String[512], minter: address):
-    NAME = name
-    SYMBOL = symbol
+def __init__(name_: String[512], symbol_: String[512], minter: address):
+    NAME = name_
+    SYMBOL = symbol_
     MINTER = minter
+
+
+# standard ERC-20 metadata (lowercase) — wallets, DEXes, and explorers key
+# off these; the uppercase immutable getters remain for compatibility
+@external
+@view
+def name() -> String[512]:
+    return NAME
+
+
+@external
+@view
+def symbol() -> String[512]:
+    return SYMBOL
+
+
+@external
+@view
+def decimals() -> uint8:
+    return DECIMALS
 
 
 @external

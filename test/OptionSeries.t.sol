@@ -27,6 +27,10 @@ contract OptionSeriesTest is Base {
         assertEq(N.SYMBOL(), "N-USD-1250-260625");
         assertEq(P.NAME(), "Tracking P USD-1250-260625");
         assertEq(N.NAME(), "Leverage N USD-1250-260625");
+        // standard lowercase ERC-20 metadata (what wallets/DEXes call)
+        assertEq(P.symbol(), "P-USD-1250-260625");
+        assertEq(P.name(), "Tracking P USD-1250-260625");
+        assertEq(P.decimals(), 18);
 
         // fractional strike + registered asset symbol from the hub
         IOptionSeries xau = IOptionSeries(

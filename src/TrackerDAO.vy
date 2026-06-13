@@ -186,6 +186,26 @@ def __init__(
 # --------------------------------------------------------------- ERC20 -----
 
 
+# standard ERC-20 metadata (lowercase) — wallets, DEXes, and explorers key
+# off these; the uppercase immutable getters remain for compatibility
+@external
+@view
+def name() -> String[64]:
+    return NAME
+
+
+@external
+@view
+def symbol() -> String[32]:
+    return SYMBOL
+
+
+@external
+@view
+def decimals() -> uint8:
+    return DECIMALS
+
+
 @external
 def transfer(to: address, amount: uint256) -> bool:
     assert to != empty(address), "zero receiver"

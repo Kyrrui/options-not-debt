@@ -10,32 +10,34 @@ All contracts source-verified on Blockscout. Live Chainlink feeds; no mocks.
 |---|---|
 | OracleHub | [`0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62`](https://eth-sepolia.blockscout.com/address/0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62) |
 
-### Current stack — trader-legible symbology (deployed 2026-06-12, v3)
+### Current stack (deployed 2026-06-12, v4 — standard ERC-20 metadata)
 
 Trackers are created permissionlessly through the factory and enumerated
 on-chain — **UIs should discover trackers from the factory, not from this
-file** (`tracker_count`/`tracker_list(i)`/`is_tracker(addr)`). P/N tokens
-self-describe in wallets: `P-<ASSET>-<STRIKE>-<YYMMDD>` (e.g.
-`P-XAU-0.198-260710`).
+file** (`tracker_count`/`tracker_list(i)`/`is_tracker(addr)`). All tokens
+expose standard lowercase `name()`/`symbol()`/`decimals()` (wallets, DEXes,
+explorers) alongside the uppercase Vyper getters. P/N tokens self-describe:
+`P-<ASSET>-<STRIKE>-<YYMMDD>` (e.g. `P-XAU-0.197-260711`).
 
 | Contract | Address |
 |---|---|
-| **SeriesFactory** | [`0x6b44C44720C1AcC70da6af30A733A0723806D390`](https://eth-sepolia.blockscout.com/address/0x6b44C44720C1AcC70da6af30A733A0723806D390) |
-| **TrackerFactory** | [`0x8E50Cb30173b02C862592507bE038fA988F97A19`](https://eth-sepolia.blockscout.com/address/0x8E50Cb30173b02C862592507bE038fA988F97A19) |
-| OptionToken blueprint (EIP-5202) | `0xc3bde804fc1d794b753ab8b3f0bcf619d7697b13` |
+| **SeriesFactory** | [`0x63C29F7981b45cbbE9D6c5E20d892D70f6db19C2`](https://eth-sepolia.blockscout.com/address/0x63C29F7981b45cbbE9D6c5E20d892D70f6db19C2) |
+| **TrackerFactory** | [`0x7C87799cad38576ddB03881570bd62e7ac1daf49`](https://eth-sepolia.blockscout.com/address/0x7C87799cad38576ddB03881570bd62e7ac1daf49) |
+| OptionToken blueprint (EIP-5202) | `0x360b1f203f82f06709c5d7c9ec9d86993a3034c4` |
 | OptionSeries blueprint (EIP-5202) | `0x0e5f7f8a8ee445acab0a1fdbfcefe02361fe1d6b` |
-| TrackerDAO blueprint (EIP-5202) | `0x643836b40C5D9D4864a2293584F8174BB0F1c175` |
-| spUSD — Soft Peg USD (tracker 0) | [`0xa1B165Fb03A724fCde429785c50A751d3b186208`](https://eth-sepolia.blockscout.com/address/0xa1B165Fb03A724fCde429785c50A751d3b186208) |
-| spXAU — Soft Peg Gold (tracker 1) | [`0x734F97E705cF5f0f14553C621544580283D8f12C`](https://eth-sepolia.blockscout.com/address/0x734F97E705cF5f0f14553C621544580283D8f12C) |
-| spBTC — Soft Peg Bitcoin (tracker 2) | [`0x789D6816Ddbe5c77EF11e446087111a250fd799F`](https://eth-sepolia.blockscout.com/address/0x789D6816Ddbe5c77EF11e446087111a250fd799F) |
-| spXAU genesis series (`XAU-0.198-260710`) | [`0xff17563fa3095939f64fD950247F58A54C98200d`](https://eth-sepolia.blockscout.com/address/0xff17563fa3095939f64fD950247F58A54C98200d) |
+| TrackerDAO blueprint (EIP-5202) | `0x302E0aF6f6F4F42049dF5513d0109870c7D987F0` |
+| spUSD — Soft Peg USD (tracker 0) | [`0x80A229e1d85fd75511B889D0e7a2A8CA34f94FAE`](https://eth-sepolia.blockscout.com/address/0x80A229e1d85fd75511B889D0e7a2A8CA34f94FAE) |
+| spXAU — Soft Peg Gold (tracker 1) | [`0x51eBb768b45461B4024eE4a9631752d2fD8e38F2`](https://eth-sepolia.blockscout.com/address/0x51eBb768b45461B4024eE4a9631752d2fD8e38F2) |
+| spBTC — Soft Peg Bitcoin (tracker 2) | [`0x46E85dAbbFB4951bEa691E3AbD8008d02c1C5109`](https://eth-sepolia.blockscout.com/address/0x46E85dAbbFB4951bEa691E3AbD8008d02c1C5109) |
+| spXAU genesis series (`XAU-0.197-260711`) | [`0xE9BdF51C0064E5E49a3800E79364544164243924`](https://eth-sepolia.blockscout.com/address/0xE9BdF51C0064E5E49a3800E79364544164243924) |
+| └ P / N legs | `0x755E166541537834E0C489FeFed9BE18f3ba2750` / `0x7e2E2Ec62C37fd6C0BF35B858e2948daC7659221` |
 
-### Deprecated v2 (pre-symbology, 2026-06-12 am — generic OPT-P/OPT-N names)
+### Deprecated earlier stacks (2026-06-12)
 
-| Contract | Address |
-|---|---|
-| SeriesFactory / TrackerFactory | `0x4Be934A244c25034546CF4a265db51b8943D248D` / `0xC78A0A16755E45a70633631a40bBDEf349dCE713` |
-| spUSD / spXAU / spBTC | `0xD4CB61f4ad9bac2D52b2797cAEbF04e1270Ac03F` / `0xB150748D9F988df5f93c86F3b21c98ebC03D3faC` / `0xf5383E844C040312f2dCF6479C6cDf60FF7185dE` |
+| Version | Defect | Addresses |
+|---|---|---|
+| v3 (symbology, uppercase-only metadata) | no lowercase `name()`/`symbol()`/`decimals()` — invisible to wallets/DEXes | SF `0x6b44...D390`, TF `0x8E50...7A19`, spUSD `0xa1B1...6208`, spXAU `0x734F...f12C`, spBTC `0x789D...799F` |
+| v2 (generic OPT-P/OPT-N names) | leg symbols collide across rolls | SF `0x4Be9...248D`, TF `0xC78A...E713`, spUSD `0xD4CB...c03F`, spXAU `0xB150...3faC`, spBTC `0xf538...85dE` |
 
 ### Deprecated (pre-factory standalone deployments, 2026-06-11)
 

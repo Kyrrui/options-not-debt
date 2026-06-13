@@ -7,6 +7,9 @@ interface IOptionToken {
     function NAME() external view returns (string memory);
     function SYMBOL() external view returns (string memory);
     function DECIMALS() external view returns (uint8);
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
     function MINTER() external view returns (address);
     function totalSupply() external view returns (uint256);
     function balanceOf(address) external view returns (uint256);
@@ -89,6 +92,9 @@ interface ITrackerDAO {
     function NAME() external view returns (string memory);
     function SYMBOL() external view returns (string memory);
     function DECIMALS() external view returns (uint8);
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+    function decimals() external view returns (uint8);
     function HUB() external view returns (address);
     function FACTORY() external view returns (address);
     function ASSET() external view returns (bytes32);

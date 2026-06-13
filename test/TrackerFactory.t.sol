@@ -60,6 +60,10 @@ contract TrackerFactoryTest is Base {
         assertEq(usd.MAX_EDGE(), EDGE);
         assertEq(usd.NAME(), "Soft Peg USD");
         assertEq(usd.SYMBOL(), "spUSD");
+        // standard lowercase ERC-20 metadata (what wallets/DEXes call)
+        assertEq(usd.name(), "Soft Peg USD");
+        assertEq(usd.symbol(), "spUSD");
+        assertEq(usd.decimals(), 18);
     }
 
     function test_create_dedupesOnParamsNotNames() public {
