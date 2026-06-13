@@ -379,6 +379,123 @@ NAV). New alert: |basis| > 3% sustained for > 1h. The keeper does NOT
 trade pools — display and alerting only; any pool market-making is a
 future operator-MM concern, out of scope.
 
+### 3.E Leverage Terminal — "liquidation-proof leverage" (the N-leg product)
+
+This is the **N-side trading surface**, and the strategic point of it: the N
+leg is leveraged long ETH-vs-asset exposure that **can never be liquidated
+and pays no funding rate** — worst case it expires worth zero, never "wiped
+on a wick." Surfacing N as a headline product (rather than a deposit
+byproduct) is also how the protocol gets its N buyers: TrackerDAO depositors
+*receive* N and want to shed it; leverage traders *want* N. This terminal is
+where those two meet.
+
+**READ THIS FIRST — the core architectural truth.** Holding N alone is
+leverage; holding P+N together is not (it's just decomposed ETH). But the
+only way the contracts mint N is `OptionSeries.split()`, which mints **equal
+P and N to the caller**. So "pure leverage" always requires *disposing of the
+P*. There is no contract function that sells you pure N for ETH. This makes
+**an N spot venue the load-bearing dependency of this product** — without one,
+the terminal can only `split` (leaving the user holding both legs, i.e. not
+leveraged). Everything below is organized around that fact.
+
+**What an N position is (exact mechanics).** For a series with strike `S` and
+live index `x` (asset units per ETH; `x > S` is the normal deep-ITM case):
+- N is a **call option** on the tracked asset. Settlement payoff per 1 unit
+  of N: `max(0, 1 − S/X)` ETH, equivalently `max(0, X − S)` asset units,
+  where `X` is the index at maturity. Below the strike at maturity → **0**.
+- **Premium / entry value** (intrinsic, ETH per unit) = `max(0, 1 − S/x)`.
+  Market price (what you actually pay/receive) is the venue price, which
+  includes time value; show both and label the difference as time value.
+- **Effective leverage** ≈ `x / (x − S)` (sensitivity of the position to the
+  underlying relative to premium paid). e.g. x=2500, S=2000 → ~5×. Choosing a
+  **higher strike → higher leverage** (and higher theta); choosing a **further
+  expiry → more time value paid**. Surface both knobs as "leverage" and
+  "tenor."
+- **Liquidation price: none** — display literally "None — cannot be
+  liquidated." **Max loss: 100% of premium** (if `X ≤ S` at maturity).
+- **Breakeven at maturity** for a buyer who paid `p` ETH/unit:
+  `X = S / (1 − p)`.
+- **No funding rate** — display "0 / none"; contrast with perps explicitly.
+- **Theta (the honest cost):** the time-value portion of the premium decays
+  to zero by maturity. If the underlying goes sideways, the position bleeds.
+  This is the cost paid *instead of* funding + liquidation risk; state it
+  plainly. (See the running example and framing in the chat lesson; mirror
+  that tone — confident but honest.)
+
+**The N venue — v1 recommendation (reconciles with §3.D).** §3.D forbids
+AMM pools on the expiring P/N legs **on the saver surface**, because savers
+should never touch expiring instruments. The Leverage Terminal is the
+opposite, opt-in, pro surface where **expiry is the entire product** (every
+options market is per-strike-per-expiry — this is a feature, like a Deribit
+options chain, not the fragmentation footgun §3.D warned about). So **here,
+per-series N/WETH pools are allowed and are the recommended v1 venue**:
+- **Open a long:** swap WETH → N in the chosen series' pool. Clean "pay
+  premium, get pure leverage" UX, no P ever touched.
+- **Sell / close:** swap N → WETH (this is the depositors' exit — the same
+  pool serves both sides).
+- **Liquidity source:** TrackerDAO depositors' shed N + market makers who
+  `split` and list N. The terminal should include a "mint & list" helper
+  (split ETH at a series → keep N or sell it; the P is the user's to keep,
+  merge, or sell) so MMs/depositors can supply the pool.
+- **Hard expiry guardrails (mandatory):** each pool is tied to one series'
+  maturity. Show a maturity countdown on every market; **block opening new
+  longs within a short window before maturity** (configurable, e.g. < ROLL
+  margin) since theta is brutal and settlement is near; mark settled-series
+  pools as **dead** (hide spot price — a settled N is fixed/➝0, the pool
+  shows garbage) and route holders to `redeem_n` instead; never migrate
+  liquidity silently across series — the roll helper does it explicitly.
+- Pull Uniswap v3 canonical addresses from the official registry (as §3.D);
+  compute `sqrtPriceX96` with the token0/token1 sort-order care from §3.D.
+
+**v2 — the clean one-click path (periphery contract, flagged not built):** a
+small `LeverageRouter` that, in one tx, `split`s the user's ETH and disposes
+of the P atomically (sells it into the TrackerDAO `sell_p` auction when a
+buffer is live, or a P sink), returning the user a **pure N position funded
+by part of their ETH** — no pre-existing N pool required. This is the true
+"buy leverage in one click from ETH" primitive; note it as future work, do
+not build it in v1. (It needs a P sink with depth, which today only exists
+intermittently via the DAO buffer — hence v1 uses pools.)
+
+**Screens & flows.**
+- **Markets list:** enumerate option series from the SeriesFactory
+  (`series_count`/`series_list(i)`/`SeriesCreated` events). Each row =
+  (asset, strike → leverage, maturity → tenor, mark premium, N pool depth if
+  any, oracle freshness). **Highlight series belonging to active trackers**
+  (their N has natural depositor sell-side, so the deepest markets). Group by
+  asset; within an asset, an options-chain layout (rows = strikes, columns =
+  expiries) is the familiar mental model.
+- **Open position:** pick asset → leverage (strike) → tenor (expiry); if that
+  series doesn't exist, offer to create it permissionlessly
+  (`SeriesFactory.create_series`, mirror §7 term bounds). Preview: premium,
+  effective leverage, breakeven, max loss (= premium), liquidation price
+  ("None"), funding ("None"), and a **payoff diagram** (the call hockey-stick
+  vs the underlying, with breakeven and current marks). Then either swap
+  WETH→N (pool path) or split+keep-N (mint path), with oracle-freshness
+  gating on anything that reads the index.
+- **Position view (portfolio):** the user's N holdings across series, each
+  labeled by the on-chain symbology (`N-XAU-0.198-260710`), with current mark,
+  unrealized PnL, effective leverage now, breakeven, **time-to-expiry and
+  theta warning**, and one-click close (sell N) / roll / hold-to-settlement.
+  Resolve token→series via `MINTER()`; remember a settled series' N is
+  redeemed via `OptionSeries.redeem_n`, not sold.
+- **Roll helper:** N expires; to maintain exposure, roll = close the
+  expiring-series position (sell N or, if settled, `redeem_n`) and open the
+  equivalent in a later series (buy N or split). Present it as one guided
+  action with the new premium, the realized PnL on the old leg, and the
+  theta saved. Never auto-roll silently.
+
+**Mandatory risk disclosures (this surface sells leverage — be loud):**
+- "No liquidation" ≠ "no loss." You can lose **100% of your premium** if the
+  asset is below the strike at expiry.
+- It is an **expiring** instrument — value decays with time (theta); a flat
+  market loses money.
+- This is **not** a perpetual; it has a maturity date, shown everywhere.
+- Testnet, unaudited, research code.
+
+**Out of scope for this surface:** the soft-peg/saver flows (§3.A) — keep the
+terminal a distinct "Pro / Trade" area so a saver never wanders into buying
+decaying leverage by accident.
+
 ## 4. Architecture
 
 - **Stack**: Vite + React + TS, wagmi v2 + viem, RainbowKit/ConnectKit,
@@ -421,9 +538,18 @@ future operator-MM concern, out of scope.
   `payout_p × x / 1e18`.
 - `pp(series)` [wei/unit, ETH-denominated intrinsic — sell_p uses THIS, not
   val_p; confusing them mis-prices by ~x]: `min(1e18, STRIKE × 1e18 / x)`.
-- N intrinsic [wei/unit] = `1e18 − pp`.
+- N intrinsic [wei/unit] = `1e18 − pp` (call payoff `max(0, 1 − S/x)` per
+  unit, settled to `payout_n = 1e18 − payout_p`).
 - `NAV` [asset units] = `eth_buffer×x/1e18 + Σ_{s∈{active,pending}} p_bal(s)×val_p(s)/1e18`.
 - share price = `NAV × 1e18 / totalSupply` (supply==0 → 1e18).
+
+**5.1b Leverage Terminal (N-leg) display math** (§3.E). All bigint, the
+underlying is the index `x` = asset units per ETH; strike `S` = `STRIKE()`:
+- N premium / mark, intrinsic [wei per 1e18 N] = `1e18 − pp` = `max(0, 1e18 − S×1e18/x)`. Market mark = N/WETH pool price; the gap vs intrinsic is time value.
+- N asset-denominated payoff per unit at maturity index `X` = `max(0, X − S)` (it is a call struck at `S`).
+- effective leverage ≈ `x / (x − S)` (only meaningful while `x > S`; if `x ≤ S` the position is out-of-the-money, mark→0, leverage display "OTM").
+- breakeven index at maturity for premium `p` [wei/unit] = `S×1e18 / (1e18 − p)`.
+- max loss = the premium paid (100%); liquidation price = none; funding = none.
 
 **5.2 Action math**
 - Deposit: `value_in = amount × val_p(target) / 1e18`;
