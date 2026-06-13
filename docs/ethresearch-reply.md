@@ -1,18 +1,21 @@
 # Draft reply for ethresear.ch t/25036 — review before posting
 
-> Status: READY FOR REVIEW (refreshed 2026-06-13 after reading posts #1–19).
-> A research contribution + a direct answer to @KG's oracle-spectrum
-> question in #17. Post under Kyrrui's account. Tone: contribution, not
-> promotion. Repo + contracts are the artifacts; the frontend is secondary.
+> Status: READY FOR REVIEW (refreshed 2026-06-13, first person). A research
+> contribution + a direct answer to @KG's oracle-spectrum question in #17.
+> Post under Kyrrui's account. Tone: contribution, not promotion. Repo +
+> contracts are the artifacts; the frontend is secondary.
 
 ---
 
-We took the maturity-only construction in the OP and built it end-to-end as
-an open-source, formally-verified, deployed system —
+I took the maturity-only construction in the OP and built it end-to-end as an
+open-source, formally-verified, deployed system —
 [options-not-debt](https://github.com/Kyrrui/options-not-debt) — to see what
 the design teaches you once it has to run against real oracles and real
-users. A few things that may be useful to the thread, plus a direct response
-to @KG's oracle question.
+users. In the interest of full transparency: I built the entire thing — the
+Vyper contracts, the test and formal-verification harness, and the frontend —
+with Claude Fable (Anthropic's model) doing the implementation under my
+direction. A few things from the process that may be useful to the thread,
+plus a direct response to @KG's oracle question.
 
 **What it is.** The P/N primitive exactly as described (split 1 ETH → P + N,
 recombine any time, one lazy oracle read at maturity, `P + N = 1 ETH`
@@ -25,21 +28,20 @@ gradual auctions. Three pegs are live on Sepolia against real Chainlink feeds
 `docs/deployments.md`, and there's an interactive reference frontend if you
 want to poke it.
 
-**On the options-liquidity concern (@JSeam2 #14, @Xatarrer #15).** We think
-this is real but is being aimed at the wrong layer. We do *not* try to run an
-options order book. Following the OP's "rebalancing should be one-sided
-market making, not an instant sell," rolling is a gradual auction: the
-wrapper posts a standing offer to swap old-strike P for new-strike P at a
-rate that starts oracle-fair and improves linearly to a bounded edge (2% over
-a day). The crucial part is the fallback — if nobody fills, the old series
-simply settles via the slow oracle and the wrapper harvests it to ETH. So a
-roll that finds no liquidity degrades to *tracking drift*, never to a failed
-or liquidated trade. Honest tradeoff, not hidden: the tracking is genuinely
-"soft" — exact above the strike, drifting below it — which is the quadratic
-drift the OP already accepts, restated as a concrete mechanism rather than a
-promise.
+**On the options-liquidity concern (@JSeam2 #14, @Xatarrer #15).** I think
+this is real but aimed at the wrong layer. I do *not* try to run an options
+order book. Following the OP's "rebalancing should be one-sided market
+making, not an instant sell," rolling is a gradual auction: the wrapper posts
+a standing offer to swap old-strike P for new-strike P at a rate that starts
+oracle-fair and improves linearly to a bounded edge (2% over a day). The
+crucial part is the fallback — if nobody fills, the old series simply settles
+via the slow oracle and the wrapper harvests it to ETH. So a roll that finds
+no liquidity degrades to *tracking drift*, never to a failed or liquidated
+trade. Honest tradeoff, not hidden: the tracking is genuinely "soft" — exact
+above the strike, drifting below it — which is the quadratic drift the OP
+already accepts, restated as a concrete mechanism rather than a promise.
 
-Relatedly, we think the liquidity bottleneck is better attacked as a *demand*
+Relatedly, I think the liquidity bottleneck is better attacked as a *demand*
 problem on the N leg than as an order-book problem. The N leg — the side the
 OP assigns to "speculators and market makers" — is, concretely, **leverage on
 ETH (or any tracked asset) with no liquidation and no funding rate**, capped-
@@ -48,8 +50,8 @@ is the natural counterparty the P side needs, and a sharper pitch than
 "on-chain options," which (as @JSeam2 notes) has not historically pulled
 liquidity.
 
-**Implementation pitfalls others rebuilding this will hit.** Three that an
-adversarial review caught and that are inherent to the design, not our code
+**Implementation pitfalls anyone rebuilding this will hit.** Three that an
+adversarial review caught and that are inherent to the design, not a coding
 style:
 1. *Genesis self-roll.* If the wrapper's roll trigger and its initial-strike
    ratio overlap, a freshly created series immediately qualifies for a roll
@@ -77,8 +79,8 @@ claimed. The takeaway for implementers: the no-bad-debt / conservation
 direction is the part worth proving, and it largely is.
 
 **@KG (#17) — your oracle-spectrum question.** This is the most interesting
-open question in the thread, and being the maturity-only end of it, here's
-the concrete datapoint. In this construction the oracle is consulted exactly
+open question in the thread, and being the maturity-only end of it, here's my
+concrete datapoint. In this construction the oracle is consulted exactly
 once, at/after maturity, to set a single scalar — and, critically, the
 **redeem and merge paths are entirely oracle-free** (a holder can always
 recombine P + N back to ETH, or redeem a settled leg, with zero oracle
@@ -100,20 +102,20 @@ That gives a clean ordering of the same design family:
 - *Debt + liquidation:* oracle makes a real-time, adversarially-timed,
   *irreversible* solvency decision. Largest surface.
 
-So I'd answer your question as: yes, your barrier is meaningfully different
+So my answer to your question: yes, your barrier is meaningfully different
 from liquidation oracle-dependence (no bad debt, no undercollateralized
 rescue), but it is also meaningfully *larger* than the maturity-only
 surface — and the difference is precisely the path-dependence you flagged.
 The richer payoff you get for it (perpetual experience, explicit protected
 collar) is a real user-facing gain; the question is whether a given use case
 needs the oracle to ever act under time pressure at all. For pure price-
-stability we found it doesn't, which is why we kept it maturity-only and
-pushed all timing decisions to users/wrappers. Would be very interested in
-where TRP draws that line and how the costless-collar reset stays
-non-extractive — the "keep the primitive non-extractive" point in #18 is the
-right constraint.
+stability I found it doesn't, which is why I kept it maturity-only and pushed
+all timing decisions to users/wrappers. I'd be very interested in where TRP
+draws that line and how the costless-collar reset stays non-extractive — the
+"keep the primitive non-extractive" point in #18 is the right constraint.
 
-Research code, ten-ish days old, **unaudited** (one structured multi-agent
-internal review; external audit is the gate before mainnet) and testnet-only.
-Issues, counterexamples, and PRs welcome — especially anyone who can close
-the three remaining division proofs or break the conservation invariant.
+Research code, ten-ish days old, built with Claude Fable, **unaudited** (one
+structured multi-agent internal review; an external audit is the gate before
+mainnet) and testnet-only. Issues, counterexamples, and PRs welcome —
+especially anyone who can close the three remaining division proofs or break
+the conservation invariant.
