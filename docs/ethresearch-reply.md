@@ -1,102 +1,119 @@
 # Draft reply for ethresear.ch t/25036 — review before posting
 
-> Status: READY FOR REVIEW. Sepolia deployment live and verified. Post under
-> Kyrrui's account after review. Tone: research contribution, not launch
-> announcement.
+> Status: READY FOR REVIEW (refreshed 2026-06-13 after reading posts #1–19).
+> A research contribution + a direct answer to @KG's oracle-spectrum
+> question in #17. Post under Kyrrui's account. Tone: contribution, not
+> promotion. Repo + contracts are the artifacts; the frontend is secondary.
 
 ---
 
-I implemented the full design end-to-end as a public repo —
-[options-not-debt](https://github.com/Kyrrui/options-not-debt) — Vyper 0.4.3
-contracts, Foundry fuzz/invariant suites, and Halmos symbolic proofs over the
-compiled bytecode. It covers the P/N primitive, a permissionless Chainlink
-RWA registry (any asset with a USD feed; ETH is the only collateral), and the
-"fully-automated onchain DAO — all rules, no voting, no AI" wrapper as a
-soft-peg ERC-20. A few implementation notes and pitfalls that may be useful
-to others building on this design.
+We took the maturity-only construction in the OP and built it end-to-end as
+an open-source, formally-verified, deployed system —
+[options-not-debt](https://github.com/Kyrrui/options-not-debt) — to see what
+the design teaches you once it has to run against real oracles and real
+users. A few things that may be useful to the thread, plus a direct response
+to @KG's oracle question.
 
-**Implementation choices**
+**What it is.** The P/N primitive exactly as described (split 1 ETH → P + N,
+recombine any time, one lazy oracle read at maturity, `P + N = 1 ETH`
+always). On top of it: a permissionless Chainlink registry so any asset with
+a USD feed is trackable; a permissionless factory so anyone mints a soft-peg
+wrapper in one transaction; and the "fully-automated, all-rules-no-voting"
+wrapper DAO that holds only the P (tracking) leg and rolls it down-strike via
+gradual auctions. Three pegs are live on Sepolia against real Chainlink feeds
+(USD, gold, BTC); contracts are source-verified, addresses in the repo's
+`docs/deployments.md`, and there's an interactive reference frontend if you
+want to poke it.
 
-1. *Exact conservation.* Settlement computes `payout_p = min(1e18, S·1e18/x)`
-   once, and N's payout is defined as the exact integer remainder — so
-   P + N = 1 holds in integer arithmetic, not just in the limit. Machine-checked
-   with symbolic execution (plus 128k-call stateful invariant fuzzing); the
-   per-redemption rounding shortfall is provably < 2 wei.
+**On the options-liquidity concern (@JSeam2 #14, @Xatarrer #15).** We think
+this is real but is being aimed at the wrong layer. We do *not* try to run an
+options order book. Following the OP's "rebalancing should be one-sided
+market making, not an instant sell," rolling is a gradual auction: the
+wrapper posts a standing offer to swap old-strike P for new-strike P at a
+rate that starts oracle-fair and improves linearly to a bounded edge (2% over
+a day). The crucial part is the fallback — if nobody fills, the old series
+simply settles via the slow oracle and the wrapper harvests it to ETH. So a
+roll that finds no liquidity degrades to *tracking drift*, never to a failed
+or liquidated trade. Honest tradeoff, not hidden: the tracking is genuinely
+"soft" — exact above the strike, drifting below it — which is the quadratic
+drift the OP already accepts, restated as a concrete mechanism rather than a
+promise.
 
-2. *`merge` works after settlement.* Since P + N = 1 always, recombining legs
-   into ETH never needs the oracle — an exit that survives total oracle
-   failure, echoing @mmchougule's "settlement is an asset transfer" point.
+Relatedly, we think the liquidity bottleneck is better attacked as a *demand*
+problem on the N leg than as an order-book problem. The N leg — the side the
+OP assigns to "speculators and market makers" — is, concretely, **leverage on
+ETH (or any tracked asset) with no liquidation and no funding rate**, capped-
+loss by construction. Framed and surfaced as a product in its own right, that
+is the natural counterparty the P side needs, and a sharper pitch than
+"on-chain options," which (as @JSeam2 notes) has not historically pulled
+liquidity.
 
-3. *The wrapper never holds N.* `deposit()` splits the ETH, keeps P, and hands
-   N straight back to the depositor — "rely on speculators and market makers
-   to hold N" taken literally. Wrapper NAV prices P at intrinsic `min(x, S)`
-   only: no volatility oracle, no Black–Scholes (per the OP's warning). Time
-   value is priced instead by the market through the auction edges.
+**Implementation pitfalls others rebuilding this will hit.** Three that an
+adversarial review caught and that are inherent to the design, not our code
+style:
+1. *Genesis self-roll.* If the wrapper's roll trigger and its initial-strike
+   ratio overlap, a freshly created series immediately qualifies for a roll
+   and the wrapper tries to roll it into an identical series — bricking a
+   no-admin contract at birth. Needs a constructor cross-parameter invariant.
+2. *Re-entry-auction anchor.* Anchoring the buy-back auction's price ramp on
+   "buffer became non-empty" lets a 1-wei residue pin the ramp at maximum
+   premium forever, leaking the edge to searchers on every later harvest. The
+   anchor must reset per harvest.
+3. *Oracle-registry squatting.* Keying oracle configs by feed address alone
+   lets a first registrant lock a bad staleness setting permanently;
+   content-addressing by `(feed, heartbeat)` removes the whole class and
+   makes registration idempotent.
 
-4. *Rolling per @Czar102's "predictable rolling."* Roll triggers at
-   `x < 1.5·S` or 7 days before maturity; rotation is a one-sided gradual
-   auction (deliver new-strike P, take old-strike P) whose rate improves
-   linearly to a 2% cap over a day. If nobody fills, the old series settles
-   via the slow oracle and the wrapper harvests to ETH — a stalled roll
-   degrades to tracking drift, never to bad debt or a frozen system.
+**Formal verification (which invariants actually hold).** Eight properties
+are machine-proven on the compiled bytecode with Halmos: full
+collateralization at split, split→merge value-exactness, payout bounded by 1
+ETH/unit, ERC-20 supply conservation, mint authority, and the peg-cap and
+monotonicity properties below the strike. The three properties that compose
+symbolic 256-bit floor-division (redemption conservation to <2 wei, the
+peg-cap and monotonicity *above* the strike) are not closed by the SMT
+solver in practical time; they're corroborated by independent reasoning and
+by 128k-call stateful invariant suites, and flagged as such rather than
+claimed. The takeaway for implementers: the no-bad-debt / conservation
+direction is the part worth proving, and it largely is.
 
-5. *Slow oracle, content-addressed.* Registry entries are keyed by
-   `(feed, heartbeat)` pairs, so integrators opt into the exact staleness
-   tolerance they trust. Settlement is one lazy pull at/after maturity; a
-   quorum/dispute gate like @CertifiedCryp suggests would slot in at the
-   registry boundary without touching the series.
+**@KG (#17) — your oracle-spectrum question.** This is the most interesting
+open question in the thread, and being the maturity-only end of it, here's
+the concrete datapoint. In this construction the oracle is consulted exactly
+once, at/after maturity, to set a single scalar — and, critically, the
+**redeem and merge paths are entirely oracle-free** (a holder can always
+recombine P + N back to ETH, or redeem a settled leg, with zero oracle
+involvement). So the most a wrong, stale, or manipulated oracle can do is
+delay one settlement or mis-set one settlement value; it can never force-
+close a position, strand collateral, or create bad debt.
 
-**Pitfalls found by adversarial review** (worth checking in any implementation)
+I'd argue the axis that actually matters isn't "oracle or no oracle" — it's
+**whether the oracle ever makes an irreversible, time-pressured decision.**
+That gives a clean ordering of the same design family:
+- *Maturity-only (this):* oracle makes one reversible-by-exit, non-time-
+  critical scalar call. Smallest trust surface; tolerates slow/disputable
+  oracles.
+- *Path-dependent barrier (TRP):* oracle drives mid-life state transitions on
+  a fully-collateralized pair. Larger surface — it reintroduces real-time
+  response and adversarial-timing sensitivity — but, because the pair stays
+  fully collateralized, it still never produces bad debt the way liquidation
+  does.
+- *Debt + liquidation:* oracle makes a real-time, adversarially-timed,
+  *irreversible* solvency decision. Largest surface.
 
-- *Genesis self-roll brick.* If `strike_ratio × roll_trigger ≥ 1`, a freshly
-  created series already satisfies the roll rule, and the wrapper tries to
-  roll it into an identical series in the same block (factory dedupe returns
-  the same address) — permanently bricking a no-admin contract. Needs a
-  constructor cross-parameter invariant.
-- *Auction-anchor stickiness.* Anchoring the re-entry auction's price ramp at
-  "buffer became nonzero" lets a 1-wei residue pin the ramp at max premium
-  forever, leaking the full edge to searchers on every subsequent harvest.
-  The anchor must reset per harvest.
-- *Registry squatting.* Keying oracle configs by feed address alone lets the
-  first registrant lock a bad heartbeat permanently; content-addressing
-  removes the entire class.
+So I'd answer your question as: yes, your barrier is meaningfully different
+from liquidation oracle-dependence (no bad debt, no undercollateralized
+rescue), but it is also meaningfully *larger* than the maturity-only
+surface — and the difference is precisely the path-dependence you flagged.
+The richer payoff you get for it (perpetual experience, explicit protected
+collar) is a real user-facing gain; the question is whether a given use case
+needs the oracle to ever act under time pressure at all. For pure price-
+stability we found it doesn't, which is why we kept it maturity-only and
+pushed all timing decisions to users/wrappers. Would be very interested in
+where TRP draws that line and how the costless-collar reset stays
+non-extractive — the "keep the primitive non-extractive" point in #18 is the
+right constraint.
 
-**Verification status** (kept current in the repo README): five theorems
-proven on the published bytecode — payout bounded, split/merge value-exact,
-full collateralization at entry, ERC-20 conservation, mint authority. The
-remaining three (redemption conservation, P-value ≤ S, payout monotonicity)
-compose symbolic 256-bit division chains — the hardest SMT query class — and
-are still grinding with no counterexample found; they're covered meanwhile by
-the invariant suites.
-
-**Sepolia deployment** (live Chainlink ETH/USD + XAU/USD feeds, all contracts
-source-verified on Blockscout — full table in the repo's
-[docs/deployments.md](https://github.com/Kyrrui/options-not-debt/blob/main/docs/deployments.md)):
-
-- OracleHub: [`0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62`](https://eth-sepolia.blockscout.com/address/0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62)
-- SeriesFactory: [`0x4Be934A244c25034546CF4a265db51b8943D248D`](https://eth-sepolia.blockscout.com/address/0x4Be934A244c25034546CF4a265db51b8943D248D)
-- spUSD wrapper: [`0xf35cFEf2Db231c84EEd74fd988918DE1f9062201`](https://eth-sepolia.blockscout.com/address/0xf35cFEf2Db231c84EEd74fd988918DE1f9062201)
-- spXAU wrapper: [`0xBc9E4b726dE6DDCAFaE3f41FBA6411E6679F4916`](https://eth-sepolia.blockscout.com/address/0xBc9E4b726dE6DDCAFaE3f41FBA6411E6679F4916)
-
-At deployment (ETH $1,676 / XAU $4,227 → x ≈ 0.397 oz per ETH) the gold
-wrapper's genesis series struck at x/2 and the first deposit minted shares at
-`share_price == 1e18` exactly: one share, one ounce, priced off the live
-feeds with ETH as the only collateral in the system.
-
-**Open questions for the thread**
-
-1. Wrapper share pricing at intrinsic value ignores theta entirely
-   (@equivrel's point); the auction edge (±2%) is where time value gets
-   priced. Is there a manipulation surface in the gap between intrinsic NAV
-   and market P value large enough to matter for deposit/redeem fairness, or
-   does pro-rata redemption neutralize it?
-2. Is a linear ramp to a capped edge the right shape for the rotation
-   auction, or is @Czar102's bp-per-minute premium-yield decay strictly
-   better for minimizing the rolling cost the OP flags as the main
-   competitiveness risk?
-3. The N leg is the structural bottleneck (@JSeam2's liquidity concern): is
-   there a standing-buyer design for N — perhaps @Xatarrer's saturation-zone
-   LP construction — that doesn't reintroduce a real-time oracle dependency?
-
-Research code, ten days from post to implementation, unaudited — treat
-accordingly. Issues and PRs welcome.
+Research code, ten-ish days old, **unaudited** (one structured multi-agent
+internal review; external audit is the gate before mainnet) and testnet-only.
+Issues, counterexamples, and PRs welcome — especially anyone who can close
+the three remaining division proofs or break the conservation invariant.
