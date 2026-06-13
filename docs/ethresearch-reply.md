@@ -9,13 +9,14 @@
 
 I took the maturity-only construction in the OP and built it end-to-end as an
 open-source, formally-verified, deployed system —
-[options-not-debt](https://github.com/Kyrrui/options-not-debt) — to see what
-the design teaches you once it has to run against real oracles and real
-users. In the interest of full transparency: I built the entire thing — the
+[options-not-debt](https://github.com/Kyrrui/options-not-debt) — to pressure-
+test the design by actually implementing, formally verifying, and deploying
+it. In the interest of full transparency: I built the entire thing — the
 Vyper contracts, the test and formal-verification harness, and the frontend —
 with Claude Fable (Anthropic's model) doing the implementation under my
-direction. A few things from the process that may be useful to the thread,
-plus a direct response to @KG's oracle question.
+direction. Everything useful below comes from *building and verifying* it,
+not from production use — it has none yet (see the status note). Plus a
+direct response to @KG's oracle question.
 
 **What it is.** The P/N primitive exactly as described (split 1 ETH → P + N,
 recombine any time, one lazy oracle read at maturity, `P + N = 1 ETH`
@@ -28,16 +29,29 @@ gradual auctions. Three pegs are live on Sepolia against real Chainlink feeds
 `docs/deployments.md`, and there's an interactive reference frontend if you
 want to poke it.
 
+**Honest status of what has actually run.** This is a few days old with no
+external users. On-chain, only two things have executed: permissionless peg
+creation (the three pegs were each created through the factory) and deposits
+(my own test capital), with share minting pricing off the live feeds. **No
+series has matured, and no roll, neither auction (rotation or buy-back), and
+no settlement or harvest has fired on the live deployment** — those paths are
+exercised only by the unit/fuzz/invariant suites so far. So everything below
+about rolling and auctions is *designed-and-tested* behavior, not something
+I've observed in production. I'm posting the mechanism and the verification,
+not operational results I don't have yet.
+
 **On the options-liquidity concern (@JSeam2 #14, @Xatarrer #15).** I think
 this is real but aimed at the wrong layer. I do *not* try to run an options
 order book. Following the OP's "rebalancing should be one-sided market
-making, not an instant sell," rolling is a gradual auction: the wrapper posts
-a standing offer to swap old-strike P for new-strike P at a rate that starts
-oracle-fair and improves linearly to a bounded edge (2% over a day). The
-crucial part is the fallback — if nobody fills, the old series simply settles
-via the slow oracle and the wrapper harvests it to ETH. So a roll that finds
-no liquidity degrades to *tracking drift*, never to a failed or liquidated
-trade. Honest tradeoff, not hidden: the tracking is genuinely "soft" — exact
+making, not an instant sell," rolling is *implemented* as a gradual auction:
+the wrapper posts a standing offer to swap old-strike P for new-strike P at a
+rate that starts oracle-fair and improves linearly to a bounded edge (2% over
+a day). The crucial part is the fallback — if nobody fills, the old series
+settles via the slow oracle and the wrapper harvests it to ETH. So by
+construction a roll that finds no liquidity degrades to *tracking drift*,
+never to a failed or liquidated trade (this fallback is covered by the
+invariant suite; per the status note above it has not had to fire on-chain
+yet). Honest tradeoff, not hidden: the tracking is genuinely "soft" — exact
 above the strike, drifting below it — which is the quadratic drift the OP
 already accepts, restated as a concrete mechanism rather than a promise.
 
@@ -109,8 +123,8 @@ surface — and the difference is precisely the path-dependence you flagged.
 The richer payoff you get for it (perpetual experience, explicit protected
 collar) is a real user-facing gain; the question is whether a given use case
 needs the oracle to ever act under time pressure at all. For pure price-
-stability I found it doesn't, which is why I kept it maturity-only and pushed
-all timing decisions to users/wrappers. I'd be very interested in where TRP
+stability I concluded it doesn't, which is why I kept it maturity-only and
+pushed all timing decisions to users/wrappers. I'd be very interested in where TRP
 draws that line and how the costless-collar reset stays non-extractive — the
 "keep the primitive non-extractive" point in #18 is the right constraint.
 
