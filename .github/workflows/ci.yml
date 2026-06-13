@@ -43,11 +43,15 @@ jobs:
         #   forge clean && halmos --contract HalmosVerification \
         #     --function check_redeemConservation --solver bitwuzla \
         #     --solver-timeout-assertion 0
+        # bitwuzla closes all 8 lemmas in single-digit seconds; the bundled
+        # yices is too slow (times out on payoutMonotone_acrossStrike). The
+        # 120s/assertion cap is generous headroom, not a real bound.
         run: |
           for fn in check_payoutBounded check_splitMergeExact \
                     check_splitFullyCollateralized \
                     check_erc20TransferPreservesSupply check_onlyMinterMints \
                     check_pValueAtOrBelowStrike check_payoutMonotone_belowStrike \
                     check_payoutMonotone_acrossStrike; do
-            halmos --contract HalmosVerification --function "$fn" || exit 1
+            halmos --contract HalmosVerification --function "$fn" \
+              --solver bitwuzla --solver-timeout-assertion 120000 || exit 1
           done
