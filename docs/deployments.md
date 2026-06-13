@@ -32,6 +32,22 @@ explorers) alongside the uppercase Vyper getters. P/N tokens self-describe:
 | spXAU genesis series (`XAU-0.197-260711`) | [`0xE9BdF51C0064E5E49a3800E79364544164243924`](https://eth-sepolia.blockscout.com/address/0xE9BdF51C0064E5E49a3800E79364544164243924) |
 | └ P / N legs | `0x755E166541537834E0C489FeFed9BE18f3ba2750` / `0x7e2E2Ec62C37fd6C0BF35B858e2948daC7659221` |
 
+### Periphery (deployed 2026-06-13)
+
+Stateless, trustless helper contracts (no admin, hold no funds between
+calls; the core grants them nothing).
+
+| Contract | Address |
+|---|---|
+| **LeverageRouter** (spUSD) — one-tx ETH→pure-N via the spUSD/WETH pool P-sink | [`0xe942843535Cf19272a576023588FF01a7Fce9556`](https://eth-sepolia.blockscout.com/address/0xe942843535Cf19272a576023588FF01a7Fce9556) |
+
+LeverageRouter wiring: TRACKER = spUSD, SWAP_ROUTER =
+`0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E` (Uniswap v3 SwapRouter02),
+WETH = `0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14`, POOL_FEE = 3000.
+P-sink pool = spUSD/WETH 0.3% `0x8362C2A9b13e0ba770D7bFE7C2d0ae0b33B603B9`.
+**Pool must be priced near spUSD's NAV (~$1) for sane economics** — when
+mispriced/thin the router still works but the swap over/under-pays.
+
 ### Deprecated earlier stacks (2026-06-12)
 
 | Version | Defect | Addresses |

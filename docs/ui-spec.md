@@ -447,14 +447,29 @@ per-series N/WETH pools are allowed and are the recommended v1 venue**:
 - Pull Uniswap v3 canonical addresses from the official registry (as §3.D);
   compute `sqrtPriceX96` with the token0/token1 sort-order care from §3.D.
 
-**v2 — the clean one-click path (periphery contract, flagged not built):** a
-small `LeverageRouter` that, in one tx, `split`s the user's ETH and disposes
-of the P atomically (sells it into the TrackerDAO `sell_p` auction when a
-buffer is live, or a P sink), returning the user a **pure N position funded
-by part of their ETH** — no pre-existing N pool required. This is the true
-"buy leverage in one click from ETH" primitive; note it as future work, do
-not build it in v1. (It needs a P sink with depth, which today only exists
-intermittently via the DAO buffer — hence v1 uses pools.)
+**The clean one-click path — `LeverageRouter` (BUILT + DEPLOYED).** Live on
+Sepolia at `0xe942843535Cf19272a576023588FF01a7Fce9556` (verified), wired to
+spUSD. One call `open_leverage(min_eth_out) payable` does it atomically:
+deposits the caller's ETH into the spUSD TrackerDAO (router receives sp
+shares + N), swaps the sp shares → WETH on the spUSD/WETH pool (the P-sink),
+unwraps, and returns the caller their **N leg + the recovered ETH** — pure
+leverage funded by part of their ETH, no leftover P, no pre-existing N pool
+needed. The terminal's "open long" for the USD market should call this, not
+raw `split`. Returns `(n_token, n_amount, eth_returned)`; always pass a real
+`min_eth_out` (the swap has slippage). Fork-tested end-to-end against the
+live DAO + pool and smoke-tested on-chain (`test/LeverageRouter.fork.t.sol`).
+- **Hard dependency the UI must respect:** the router's economics are only
+  sane if the **spUSD/WETH pool is priced near spUSD's NAV (~$1)**. A
+  mispriced/thin pool makes the swap massively over- or under-pay (the first
+  seeded Sepolia pool sat at ~$3.82/spUSD, turning the router into a free
+  arb). The terminal must show the expected ETH-out / implied premium from a
+  live quote and warn loudly when it deviates from NAV; someone must keep the
+  pool near NAV (operator MM / arbitrage).
+- **Scope:** one router per (tracker, pool). Today only spUSD has one; gold
+  and BTC leverage each need their own spXAU/WETH or spBTC/WETH pool + router
+  (same pattern). Until then those markets fall back to the split path. A
+  deeper oracle-priced `PVault` sink remains the scale option if pool depth
+  becomes the constraint.
 
 **Screens & flows.**
 - **Markets list:** enumerate option series from the SeriesFactory
