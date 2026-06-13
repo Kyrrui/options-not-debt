@@ -36,13 +36,18 @@ jobs:
         env:
           HALMOS_ALLOW_DOWNLOAD: "1"
         # halmos performs its own AST-bearing build; do not forge build first.
-        # CI runs the tractable theorems; the three nonlinear-division proofs
-        # (conservation, pValueNeverExceedsStrike, payoutMonotone) are
-        # long-running SMT queries — run them locally with
-        #   --solver bitwuzla --solver-timeout-assertion 0
+        # CI runs the 8 tractable lemmas on the bundled default solver. The
+        # three nonlinear 256-bit floor-division queries (redeemConservation,
+        # pValueAboveStrike, payoutMonotone_aboveStrike) are solver-intractable
+        # in CI time — run them locally with:
+        #   forge clean && halmos --contract HalmosVerification \
+        #     --function check_redeemConservation --solver bitwuzla \
+        #     --solver-timeout-assertion 0
         run: |
           for fn in check_payoutBounded check_splitMergeExact \
                     check_splitFullyCollateralized \
-                    check_erc20TransferPreservesSupply check_onlyMinterMints; do
-            halmos --contract HalmosVerification --function "$fn" --solver bitwuzla || exit 1
+                    check_erc20TransferPreservesSupply check_onlyMinterMints \
+                    check_pValueAtOrBelowStrike check_payoutMonotone_belowStrike \
+                    check_payoutMonotone_acrossStrike; do
+            halmos --contract HalmosVerification --function "$fn" || exit 1
           done

@@ -7,7 +7,8 @@ optimizer = true
 optimizer_runs = 200
 fs_permissions = [{ access = "read", path = "./out" }]
 
-[vyper]
-path = "C:/Users/thebi/AppData/Local/Packages/PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0/LocalCache/local-packages/Python312/Scripts/vyper.exe"
+# Vyper is auto-detected on PATH (install with `pip install vyper==0.4.3`).
+# Do NOT hardcode an absolute `[vyper] path` here — it breaks CI and every
+# other clone. Ensure the dir holding the `vyper` executable is on PATH.
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
