@@ -24,6 +24,9 @@
 interface IOracleHub:
     def is_registered(asset: bytes32) -> bool: view
 
+interface ISeriesFactory:
+    def HUB() -> address: view
+
 event TrackerCreated:
     asset: indexed(bytes32)
     tracker: indexed(address)
@@ -53,6 +56,11 @@ def __init__(hub: address, series_factory: address, tracker_blueprint: address):
     assert hub != empty(address), "zero hub"
     assert series_factory != empty(address), "zero factory"
     assert tracker_blueprint != empty(address), "zero blueprint"
+    # the series factory must price/register against the SAME hub, or every
+    # tracker would pass create_tracker's registration gate yet brick on its
+    # first deposit when SeriesFactory re-checks registration against its own
+    # hub. This cross-contract condition is cheaply enforceable here.
+    assert staticcall ISeriesFactory(series_factory).HUB() == hub, "hub mismatch"
     HUB = hub
     SERIES_FACTORY = series_factory
     TRACKER_BLUEPRINT = tracker_blueprint

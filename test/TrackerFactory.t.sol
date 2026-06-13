@@ -127,4 +127,25 @@ contract TrackerFactoryTest is Base {
         usd.deposit{value: 1 ether}();
         assertEq(usd.share_price(), 1e18);
     }
+
+    // ----------------------------------------- audit regression ------------
+
+    /// @notice audit (factory lens, LOW): the factory must reject a
+    ///         series_factory wired to a different OracleHub, else every
+    ///         tracker it creates bricks on first deposit
+    function deployMismatchedFactory() external {
+        // a second SeriesFactory bound to a DIFFERENT hub
+        address hub2 = deployCode("OracleHub", abi.encode(address(ethFeed), ETH_HEARTBEAT));
+        address sf2 = deployCode(
+            "SeriesFactory", abi.encode(hub2, seriesBlueprint, tokenBlueprint)
+        );
+        address trackerBlueprint = Blueprint.deployBlueprint(vm.getCode("TrackerDAO"));
+        // hub = our hub, but series_factory points at hub2 -> must revert
+        deployCode("TrackerFactory", abi.encode(address(hub), sf2, trackerBlueprint));
+    }
+
+    function test_factory_revertsHubMismatch() public {
+        vm.expectRevert();
+        this.deployMismatchedFactory();
+    }
 }

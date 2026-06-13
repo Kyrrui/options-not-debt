@@ -329,8 +329,13 @@ def deposit() -> uint256:
     self._ensure_active()
     x: uint256 = self._x()
     target: address = self._target()
-    if self.pending_series == empty(address):
-        assert not self._needs_roll(target, x), "sync required"
+    # never split into a series that already needs rolling. With no roll
+    # open this means "sync to start the roll first". During a roll it means
+    # the pending series has itself deteriorated (price fell through its own
+    # trigger while the roll stalled) and sync cannot start a nested roll —
+    # deposits wait until the current roll finalizes. A freshly created
+    # pending series never trips this (strike_ratio * roll_trigger <= 0.95).
+    assert not self._needs_roll(target, x), "sync required"
 
     nav_before: uint256 = self._nav(x)
     extcall ISeries(target).split(value=msg.value)

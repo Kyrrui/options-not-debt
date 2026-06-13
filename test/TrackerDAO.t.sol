@@ -365,6 +365,32 @@ contract TrackerDAOTest is Base {
         assertEq(dao.p_quote(1 ether), uint256(1 ether) * 5 / 10 * 98 / 100);
     }
 
+    /// @notice audit (completeness critic, LOW): deposits must be blocked
+    ///         when the target series itself needs rolling — including a
+    ///         pending series that deteriorated while a roll stalled, which
+    ///         sync cannot start a nested roll for
+    function test_deposit_blockedWhenStalledPendingNeedsRoll() public {
+        vm.prank(bob);
+        dao.deposit{value: 10 ether}();
+
+        // trigger a roll (x falls within 1.5x of the 1250 strike)
+        ethFeed.setAnswer(1850e8);
+        dao.sync();
+        IOptionSeries pending = _pending();
+        assertTrue(address(pending) != address(0));
+        // a healthy fresh pending series still accepts deposits
+        vm.prank(carol);
+        dao.deposit{value: 1 ether}();
+
+        // roll stalls (nobody fills); price falls through the PENDING
+        // strike's own trigger (pending strike = 1850*0.5 = 925; trips at
+        // x < 925*1.5 = 1387.5)
+        ethFeed.setAnswer(1300e8);
+        vm.expectRevert(); // "sync required" — pending now needs rolling too
+        vm.prank(carol);
+        dao.deposit{value: 1 ether}();
+    }
+
     /// @notice cross-function reentrancy: reentering deposit() from the ETH
     ///         send inside redeem() must be blocked by the global lock
     function test_reentrancy_redeemToDeposit_blocked() public {
