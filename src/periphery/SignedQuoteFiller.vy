@@ -6,10 +6,10 @@
         it. ONE operator funds this contract with their OWN ETH + P inventory; ONLY
         EIP-712 quotes signed by the operator's quoter key can fill; every fill is
         bounded on-chain by a DIRECTIONAL, vault-favorable edge floor that survives
-        a stolen quoter key. See docs/solo-rfq-spec.md.
+        a stolen quoter key. See docs/handoffs/solo-rfq-spec.md.
 
         It is the provably-clean residual of the killed crowd-vault
-        (docs/mm-vault-spec.md): the one good mechanism is KEPT (directional floor +
+        (docs/handoffs/mm-vault-spec.md): the one good mechanism is KEPT (directional floor +
         signed quotes), and the two structural problems are DELETED by making the
         capital and the risk the operator's OWN —
 

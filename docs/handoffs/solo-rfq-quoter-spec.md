@@ -6,7 +6,7 @@
 > them to the frontend over HTTP. It is the backend the frontend's quote-request flow
 > (`docs/handoffs/solo-rfq-frontend-handoff.md`) POSTs to.
 >
-> Contract: `src/periphery/SignedQuoteFiller.vy`. Design: `docs/solo-rfq-spec.md`.
+> Contract: `src/periphery/SignedQuoteFiller.vy`. Design: `docs/handoffs/solo-rfq-spec.md`.
 > Canonical EIP-712 shapes proven against the contract: `test/SignedQuoteFiller.fork.t.sol`.
 > Sepolia testnet, research code, unaudited.
 
@@ -198,5 +198,5 @@ Also confirm the signing key recovers to the desk's `quoter()`.
 
 ## Pointers
 - Frontend integration (the consumer of this API): `docs/handoffs/solo-rfq-frontend-handoff.md`
-- Desk design + guardrails + economics: `docs/solo-rfq-spec.md`
+- Desk design + guardrails + economics: `docs/handoffs/solo-rfq-spec.md`
 - Contract + canonical EIP-712 shapes: `src/periphery/SignedQuoteFiller.vy`, `test/SignedQuoteFiller.fork.t.sol`

@@ -3,7 +3,7 @@
 > Self-contained handoff to wire the **operator-quoted RFQ desk** (`SignedQuoteFiller`)
 > into the Gimbal frontend. This is the first and only venue where a user can **sell
 > the N (leverage) leg**, plus a quote-driven way to buy it. Full design:
-> `docs/solo-rfq-spec.md`. Contract: `src/periphery/SignedQuoteFiller.vy`. Integration
+> `docs/handoffs/solo-rfq-spec.md`. Contract: `src/periphery/SignedQuoteFiller.vy`. Integration
 > shapes (canonical): `test/SignedQuoteFiller.fork.t.sol`.
 
 ## Status & what you can build now
@@ -123,7 +123,7 @@ only — **sell-N is RFQ-exclusive** (no N pool exists to fall back to).
 
 ## Pointers
 
-- Design/rationale: `docs/solo-rfq-spec.md`
+- Design/rationale: `docs/handoffs/solo-rfq-spec.md`
 - Contract source: `src/periphery/SignedQuoteFiller.vy`
 - Canonical call shapes (Quote struct, EIP-712 digest, both flows, all guardrails): `test/SignedQuoteFiller.fork.t.sol`
 - Master frontend handoff: `docs/handoffs/gimbal-frontend-handoff.md`

@@ -95,7 +95,7 @@ Periphery API (registry- and hand-deployed instances share one source):
 Operator-run quote desk for the N (leverage) leg — the first/only venue to **sell** N.
 Holds the operator's funds, so it is intentionally standalone (not a stateless
 PeripheryFactory helper). Built + reviewed (6 low findings fixed) + fork-tested 10/10.
-Spec `docs/solo-rfq-spec.md`; integration `docs/handoffs/solo-rfq-frontend-handoff.md` +
+Spec `docs/handoffs/solo-rfq-spec.md`; integration `docs/handoffs/solo-rfq-frontend-handoff.md` +
 `docs/handoffs/solo-rfq-quoter-spec.md`. Deploy: `KEY=… BROADCAST=1 ./script/deploy-rfq-desk.sh`.
 
 | Contract | Address |
