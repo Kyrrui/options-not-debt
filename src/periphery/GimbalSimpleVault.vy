@@ -401,6 +401,7 @@ def buy_n(series: address, amount: uint256, max_cost: uint256) -> uint256:
     intrinsic: uint256 = UNIT - strike * UNIT // x    # > 0 by the band above
     price: uint256 = intrinsic * (UNIT + BASE_EDGE) // UNIT
     cost: uint256 = amount * price // UNIT
+    assert cost > 0, "dust"                            # every accepted fill is provably NAV-positive (mirrors SignedQuoteFiller MIN_EDGE>0 guard)
     assert cost <= max_cost, "slippage"
     assert msg.value == cost, "bad value"
 

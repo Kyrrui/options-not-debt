@@ -210,6 +210,15 @@ contract GimbalSimpleVaultForkTest is Test {
         assertEq(vault.quote_buy_n(series, amount), expected, "quote == intrinsic*(1+edge)");
     }
 
+    function test_buyN_dustReverts() public {
+        _depositAs(lp, 2 ether);
+        // 1 wei of N: cost = 1 * price // 1e18 truncates to 0 -> "dust" guard fires
+        assertEq(vault.quote_buy_n(series, 1), 0, "dust quote rounds to 0");
+        vm.prank(buyer);
+        vm.expectRevert();
+        vault.buy_n{value: 0}(series, 1, 0);
+    }
+
     // ---------------------------------------------------------------- redeem (oracle-free, in-kind)
 
     function test_redeem_proRataInKind_worksWhileOracleStale() public {

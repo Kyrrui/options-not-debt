@@ -13,6 +13,12 @@
 > to the [MAINNET CHECKLIST](#mainnet-checklist--must-update-before-mainnet) below.** It is safe to
 > freeze on Sepolia *because the funds are testnet*: a bug's only cost is "redeploy v2," and nobody
 > loses real value. **None of these simplifications are acceptable on mainnet** — see the checklist.
+>
+> **✅ DEPLOYED + verified on Sepolia:** [`0x25cDc829B67A4746Cf05517d53739017bd6BEe34`](https://eth-sepolia.blockscout.com/address/0x25cDc829B67A4746Cf05517d53739017bd6BEe34)
+> (immutable, unfunded; anyone `deposit()`s to fund + `buy_n()`s to trade). It passed a 14-agent
+> adversarial pre-deploy review (**DEPLOY-AS-IS**; only one info-sev finding, the dust write, which
+> was fixed pre-freeze with `assert cost > 0`). `PRE_MATURITY_BUFFER` was set to 7d (= the tracker's
+> `ROLL_WINDOW`) so the write window stops exactly when the tracker starts rolling.
 
 ```
 WHAT IT IS          immutable · ownerless · on-chain-priced · crowd-funded ETH covered-call vault
@@ -122,6 +128,18 @@ oracle-free from the buffer + in-kind P.
   only while the feed lives at settlement; a permanently dead Sepolia feed traps the locked slice —
   on testnet that means "redeploy." `redeem`'s in-kind P moves this risk to the exiting LP, not the
   frozen pool. **Mainnet fix in the checklist.**
+- **`MAX_OPEN` write-path pause (liveness, surfaced by the pre-deploy review).** `open_series` only
+  shrinks in `poke()` when a vintage settles. If the feed stays dead across many rolls, up to
+  `MAX_OPEN`=8 unsettleable vintages fill the array and `buy_n` reverts "too many open" — **writing**
+  pauses, but `redeem()` (in-kind P + buffer ETH) stays fully open and oracle-free, so nothing is
+  locked or lost; it self-heals once the feed lives and `poke()` drops settled vintages.
+- **`quote_buy_n` vs the near-strike band (integration note).** `quote_buy_n` returns a non-zero price
+  whenever `x > strike`, but `buy_n` enforces the stricter `x > strike·STRIKE_PROXIMITY` band — so a
+  quote can look fillable where `buy_n` reverts "near strike." The frontend must surface the band, not
+  just `x > strike`.
+- **`TOTAL_DEPOSIT_CAP` is lifetime-gross, not current-TVL.** It only ever counts ETH ever deposited;
+  once cumulative deposits hit it the immutable instance refuses further deposits forever (even after
+  redemptions). Sized at 10 ETH here; a long-lived busy instance may exhaust it (recourse: redeploy).
 
 ---
 

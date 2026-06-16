@@ -132,6 +132,29 @@ and **unfunded**. Go-live (operator): `set_quoter(<real key>)`, seed spUSD via `
 300–600s); caps 100 spUSD/fill · 3000 spUSD-UNITS net (oracle-invariant) · 0 floats ·
 2 ETH/window outflow.
 
+### Immutable Autonomous Vault — GimbalSimpleVault (standalone, NOT factory-deployed)
+
+The minimal crowd-owned house: an **immutable, ownerless** ETH vault that writes + sells the N
+(leverage) leg of spUSD's current ~2× series at an on-chain formulaic price (NO signer), keeping P.
+Crowd LPs deposit ETH (Earn-only); the only outflow is an LP's own oracle-free in-kind `redeem()` or a
+settled-series harvest via the permissionless `poke()`. NO owner/admin/pause/upgrade/withdraw — every
+cap is a ctor immutable. Adversarial pre-deploy review: 14 agents, 1 confirmed-real finding (info-sev
+dust write — fixed pre-freeze with `assert cost > 0`), **DEPLOY-AS-IS** verdict; 14/14 fork tests green
+on live Sepolia. Spec + MAINNET CHECKLIST: `docs/handoffs/simple-vault-sepolia-spec.md`. Deploy:
+`KEY=… BROADCAST=1 ./script/deploy-simple-vault.sh`.
+
+| Contract | Address |
+|---|---|
+| GimbalSimpleVault (spUSD immutable house) | [`0x25cDc829B67A4746Cf05517d53739017bd6BEe34`](https://eth-sepolia.blockscout.com/address/0x25cDc829B67A4746Cf05517d53739017bd6BEe34) |
+
+**LIVE + Blockscout-verified, currently UNFUNDED (`totalSupply`=0, `nav`=0).** Go-live needs NO admin
+step — anyone calls `deposit()` to fund it + `buy_n()` to trade; `poke()` is the permissionless keeper.
+Immutable params (frozen forever): USD-only; base_edge 2%; desk_max_staleness 3600s; pre_maturity_buffer
+7d (= spUSD `ROLL_WINDOW`); strike_proximity 1.5e18 (= `ROLL_TRIGGER`); caps 0.5 N/fill · 3 ETH total
+written · 1 ETH/window · 0.5 ETH/block · 10 ETH gross-deposit (lifetime, not current-TVL). **Immutable
+BY CHOICE for the Sepolia research phase — do NOT deploy as-is to mainnet (see the spec's MAINNET
+CHECKLIST: timelock guardian, hardened settle/dead-oracle, epochs, Halmos+audit, legal entity, …).**
+
 **Deprecated periphery (superseded by v2 — do not list in UIs):**
 
 | Contract | Address |
