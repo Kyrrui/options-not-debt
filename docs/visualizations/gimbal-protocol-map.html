@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Gimbal Protocol — End-to-End Map</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg2:#0d1322; --panel:rgba(255,255,255,.035); --panel2:rgba(255,255,255,.06);
+    --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+    --ink:#e9eef7; --mut:#9aa6ba; --mut2:#6b7689;
+    --eth:#6b8cff; --p:#34d399; --n:#fbbf24; --peri:#a78bfa; --ext:#f472b6; --desk:#22d3ee; --core:#7dd3fc;
+    --shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:
+     radial-gradient(1200px 700px at 12% -8%, #16203a 0%, transparent 55%),
+     radial-gradient(1100px 700px at 100% 0%, #1a1633 0%, transparent 50%),
+     var(--bg); color:var(--ink);
+     font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;}
+  a{color:var(--eth);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1180px;margin:0 auto;padding:38px 22px 80px}
+  .mut{color:var(--mut)} .small{font-size:12.5px}
+  h1{font-size:30px;letter-spacing:-.02em;margin:0 0 4px} h2{font-size:19px;letter-spacing:-.01em;margin:0 0 4px}
+  .sec{margin-top:46px}
+  .sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .sec-h .num{font-variant-numeric:tabular-nums;color:var(--mut2);font-weight:700;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:2px 8px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .chip{font-size:12px;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+  .chip b{color:var(--ink)}
+
+  /* primitive */
+  .prim{display:grid;grid-template-columns:1.05fr .95fr;gap:20px}
+  @media(max-width:860px){.prim{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+  .flowrow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:6px 0 4px}
+  .tok{border-radius:13px;padding:12px 14px;text-align:center;min-width:96px;border:1px solid var(--line2);background:#0e1424;position:relative;cursor:default}
+  .tok .t{font-weight:700;font-size:15px} .tok .s{font-size:11.5px;color:var(--mut)}
+  .tok.eth{box-shadow:inset 0 0 0 1px rgba(107,140,255,.35)} .tok.eth .t{color:var(--eth)}
+  .tok.p{box-shadow:inset 0 0 0 1px rgba(52,211,153,.35)} .tok.p .t{color:var(--p)}
+  .tok.n{box-shadow:inset 0 0 0 1px rgba(251,191,36,.35)} .tok.n .t{color:var(--n)}
+  .arrow{color:var(--mut2);font-size:20px;display:flex;flex-direction:column;align-items:center;line-height:1}
+  .arrow small{font-size:10px;color:var(--mut2);margin-top:2px}
+  .eq{text-align:center;margin:14px 0 6px;font-size:13px;color:var(--mut)}
+  .eq b{color:var(--ink)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut);margin-left:6px}
+
+  /* slider sim */
+  .sim label{font-size:12px;color:var(--mut)}
+  .sim input[type=range]{width:100%;accent-color:var(--eth);margin:8px 0 4px}
+  .bar{height:34px;border-radius:9px;overflow:hidden;display:flex;border:1px solid var(--line2);background:#0e1424;margin:10px 0 6px}
+  .bar .pp{background:linear-gradient(180deg,#34d39933,#34d39911);border-right:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--p);white-space:nowrap;transition:width .12s}
+  .bar .nn{background:linear-gradient(180deg,#fbbf2433,#fbbf2411);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--n);white-space:nowrap;transition:width .12s;flex:1}
+  .simstats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin-top:4px}
+  .simstats b{font-variant-numeric:tabular-nums}
+
+  /* contract map */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+  .group{grid-column:span 12;}
+  .glabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut2);margin:8px 2px 8px;display:flex;align-items:center;gap:8px}
+  .glabel::after{content:"";flex:1;height:1px;background:var(--line)}
+  .gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .cc{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 14px;position:relative;cursor:default;transition:transform .12s,border-color .12s,box-shadow .12s,opacity .12s;border-left:3px solid var(--cl,#888)}
+  .cc:hover{transform:translateY(-3px);border-color:var(--line2);box-shadow:0 12px 30px rgba(0,0,0,.5)}
+  .cc .nm{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:7px}
+  .cc .dot{width:8px;height:8px;border-radius:50%;background:var(--cl,#888);box-shadow:0 0 10px var(--cl)}
+  .cc .ro{font-size:12.5px;color:var(--mut);margin:5px 0 8px}
+  .cc .fn{font-size:11px;color:var(--mut2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;line-height:1.7}
+  .cc .fn span{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin:0 4px 4px 0;display:inline-block;color:#c7d0df}
+  .cc .ad{font-size:10.5px;font-family:ui-monospace,monospace;color:var(--mut2);margin-top:9px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .cc.dim{opacity:.26;filter:saturate(.5)}
+  .cc.lit{opacity:1;border-color:var(--cl);box-shadow:0 0 0 1px var(--cl), 0 14px 34px rgba(0,0,0,.55)}
+  .tip{position:absolute;z-index:20;left:14px;right:14px;bottom:calc(100% + 8px);background:#0c1322;border:1px solid var(--line2);border-radius:11px;padding:11px 12px;font-size:12.5px;color:var(--mut);box-shadow:var(--shadow);opacity:0;transform:translateY(4px);pointer-events:none;transition:.14s}
+  .cc:hover .tip{opacity:1;transform:translateY(0)}
+  .tip b{color:var(--ink)}
+
+  /* flow explorer */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{font-size:13px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;transition:.12s}
+  .tab:hover{border-color:var(--line2);color:var(--ink)}
+  .tab.on{background:linear-gradient(180deg,rgba(107,140,255,.22),rgba(107,140,255,.06));border-color:rgba(107,140,255,.5);color:#dfe7ff}
+  .rail{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:6px 0 18px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+  .actor{flex:1;min-width:118px;border-radius:11px;padding:11px 10px;text-align:center;border:1px solid var(--line);background:#0e1424;transition:.16s;position:relative;border-top:3px solid var(--cl,#888);opacity:.4}
+  .actor.on{opacity:1;box-shadow:0 0 0 1px var(--cl),0 0 24px -6px var(--cl);transform:translateY(-2px)}
+  .actor .an{font-weight:700;font-size:12.5px} .actor .as{font-size:10.5px;color:var(--mut)}
+  .raw{display:flex;align-items:center;color:var(--mut2);font-size:18px;padding:0 4px}
+  .stepbar{display:flex;align-items:center;gap:10px;margin:4px 0 14px;flex-wrap:wrap}
+  .dots{display:flex;gap:7px}
+  .d{width:26px;height:26px;border-radius:50%;border:1px solid var(--line2);background:var(--panel);color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:.12s;font-variant-numeric:tabular-nums}
+  .d:hover{border-color:var(--eth)} .d.on{background:var(--eth);border-color:var(--eth);color:#06122e;font-weight:700}
+  .nav{display:flex;gap:8px;margin-left:auto}
+  .btn{font-size:13px;padding:7px 14px;border-radius:9px;border:1px solid var(--line2);background:var(--panel);color:var(--ink);cursor:pointer}
+  .btn:hover{border-color:var(--eth)} .btn:disabled{opacity:.4;cursor:not-allowed}
+  .desc{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-height:120px}
+  .desc .st{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .desc .stn{background:var(--eth);color:#06122e;font-weight:700;border-radius:8px;padding:1px 9px;font-size:13px}
+  .desc .stt{font-weight:700;font-size:15.5px}
+  .desc .call{font-family:ui-monospace,monospace;font-size:12px;color:var(--desk);background:#091420;border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:9px 0;display:inline-block}
+  .desc p{margin:6px 0;color:var(--mut)} .desc b{color:var(--ink)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--mut)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  .foot{margin-top:40px;color:var(--mut2);font-size:12px;border-top:1px solid var(--line);padding-top:18px}
+  code{font-family:ui-monospace,monospace;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12.5px;color:#c7d0df}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Gimbal Protocol <span class="mut" style="font-weight:400;font-size:18px">· end-to-end map</span></h1>
+    <div class="mut">An ETH-backed soft-peg built on <b style="color:var(--ink)">options, not debt</b>. Lock ETH, split it into two fully-collateralized legs — a stable tracking leg and a leveraged-ETH leg. <b style="color:var(--ink)">No liquidations, no funding, no debt</b> — ever.</div>
+    <div class="chips">
+      <span class="chip"><b>P + N = 1 ETH</b> · always</span>
+      <span class="chip"><b>No liquidation</b> · fully collateralized</span>
+      <span class="chip"><b>Slow oracle</b> · read once at settlement</span>
+      <span class="chip">Network · <b>Sepolia</b> testnet · research code, unaudited</span>
+    </div>
+  </header>
+
+  <!-- 1. PRIMITIVE -->
+  <section class="sec">
+    <div class="sec-h"><span class="num">01</span><h2>The primitive — split, merge, settle</h2><span class="mut small">the one idea everything else is built on</span></div>
+    <div class="prim">
+      <div class="card">
+        <div class="flowrow">
+          <div class="tok eth"><div class="t">1 ETH</div><div class="s">locked collateral</div></div>
+          <div class="arrow">→<small>split()</small></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="tok p"><div class="t">P</div><div class="s">tracking / stable leg</div></div>
+            <div class="tok n"><div class="t">N</div><div class="s">leveraged-ETH leg</div></div>
+          </div>
+        </div>
+        <div class="eq"><b>P + N = 1 ETH</b>, always — so the system is fully collateralized by construction.</div>
+        <div class="flowrow" style="margin-top:14px">
+          <div class="tok p" style="min-width:70px"><div class="t">P</div></div><span class="mut">+</span>
+          <div class="tok n" style="min-width:70px"><div class="t">N</div></div>
+          <div class="arrow">→<small>merge()</small></div>
+          <div class="tok eth" style="min-width:70px"><div class="t">1 ETH</div></div>
+        </div>
+        <p class="mut small" style="margin:12px 2px 0">
+          <b style="color:var(--ink)">merge()</b> recombines the two legs back into ETH <b style="color:var(--ink)">at any time, with no oracle</b> — your exit never depends on a price feed.
+          <b style="color:var(--ink)">settle()</b> runs once at maturity: it pulls the index <code>x</code> (ETH priced in the asset) and fixes
+          <code>payout&nbsp;P = min(1, S/x)</code>, <code>payout&nbsp;N = 1 − payout&nbsp;P</code>. Conservation is exact — no drift, no bad debt.
+        </p>
+      </div>
+
+      <div class="card sim">
+        <div style="font-weight:700;margin-bottom:2px">See it move</div>
+        <div class="mut small" style="margin-bottom:10px">Drag the ETH price. The 1 ETH of collateral splits between the two legs — that split <i>is</i> the payoff.</div>
+        <label>ETH price (USD) — strike S = <b id="sval">$880</b> · strike ratio r = 0.5 → <b style="color:var(--n)">2× leverage</b> on N</label>
+        <input id="px" type="range" min="450" max="3500" value="1760" step="10"/>
+        <div class="bar"><div class="pp" id="ppbar"></div><div class="nn" id="nnbar"></div></div>
+        <div class="simstats">
+          <div>ETH = <b id="pxv">$1,760</b></div>
+          <div style="color:var(--p)">P (stable) = <b id="pv">0.500</b> ETH</div>
+          <div style="color:var(--n)">N (leverage) = <b id="nv">0.500</b> ETH</div>
+        </div>
+        <p class="mut small" id="simnote" style="margin-top:12px"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. CONTRACT MAP -->
+  <section class="sec">
+    <div class="sec-h"><span class="num">02</span><h2>The contracts</h2><span class="mut small">hover any card → it highlights everything it talks to. Addresses link to Blockscout.</span></div>
+    <div id="map"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <!-- 3. FLOW -->
+  <section class="sec">
+    <div class="sec-h"><span class="num">03</span><h2>Flow explorer — “buy a leverage position”</h2><span class="mut small">three ways to end up holding N. Step through to see which contracts are touched.</span></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="rail" id="rail"></div>
+    <div class="stepbar">
+      <div class="dots" id="dots"></div>
+      <div class="nav"><button class="btn" id="prev">‹ Prev</button><button class="btn" id="next">Next ›</button></div>
+    </div>
+    <div class="desc" id="desc"></div>
+  </section>
+
+  <div class="foot">
+    Built as a learning map of the Gimbal ecosystem <b>as deployed today</b> (Sepolia, chain 11155111). All contracts source-verified on Blockscout.
+    The trading desks (SignedQuoteFiller / StableQuoteFiller) are deployed but <b>not yet live</b> (placeholder operator, unfunded).
+    Hover the cards for what each contract does; step the flow for what gets touched.
+  </div>
+</div>
+
+<script>
+/* ---------- contract data ---------- */
+const C = {
+  oraclehub:{nm:"OracleHub",g:"core",cl:"#7dd3fc",ro:"Chainlink feed registry. Computes the index x = ETH priced in the asset = (ETH/USD) ÷ (ASSET/USD).",fn:["latest_price","register","feeds"],ad:"0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62",rel:["optionseries","trackerdao"],tip:"<b>The slow oracle.</b> Per ethresear.ch t/25036 the system only needs a pull-based price, read <b>once at settlement</b> — it never pushes prices and never triggers liquidations (there are none). Assets are content-addressed by (feed, heartbeat)."},
+  optiontoken:{nm:"OptionToken",g:"core",cl:"#7dd3fc",ro:"Minimal ERC-20 for one leg (a P or an N). Mint/burn restricted to its OptionSeries.",fn:["mint","burn","transfer"],ad:"blueprint",rel:["optionseries"],tip:"Each P and each N is its own ERC-20, deployed by the series. Self-describing symbols like <code>P-USD-880-260710</code> so vintages never collide."},
+  optionseries:{nm:"OptionSeries",g:"core",cl:"#7dd3fc",ro:"The P/N primitive. split() ETH→P+N · merge() P+N→ETH (oracle-free) · settle() at maturity · redeem_p/redeem_n.",fn:["split","merge","settle","redeem_p","redeem_n"],ad:"per-series",rel:["optiontoken","oraclehub","trackerdao","seriesfactory"],tip:"<b>P + N = 1 ETH, always.</b> Lock 1 ETH → mint 1 P + 1 N. Merge any time, no oracle. At maturity, one oracle read fixes the payout split. No liquidation anywhere."},
+  seriesfactory:{nm:"SeriesFactory",g:"factory",cl:"#a78bfa",ro:"Deploys OptionSeries (and their P/N token pair) from EIP-5202 blueprints.",fn:["create_series"],ad:"0x63C29F7981b45cbbE9D6c5E20d892D70f6db19C2",rel:["optionseries"],tip:"Permissionless series creation with known bytecode. The TrackerDAO calls this to spin up each new vintage as it rolls."},
+  trackerdao:{nm:"TrackerDAO  (= spUSD / spXAU / spBTC)",g:"wrapper",cl:"#34d399",ro:"The wrapper DAO + the peg's ERC-20. deposit() ETH→split, keeps P (mints shares), hands N to you. redeem() oracle-free. sync()/fill_roll()/sell_p() automate the peg.",fn:["deposit","redeem","sync","fill_roll","sell_p","share_price"],ad:"0x80A229e1d85fd75511B889D0e7a2A8CA34f94FAE",rel:["optionseries","oraclehub","trackerfactory","pool","leveragerouter","stabledesk"],tip:"<b>Holds only P, never N</b> — speculators hold N. Issues a share token soft-pegged to 1 unit of the asset (1 USD for spUSD). All rules, no voting, no AI. <b>spUSD</b> shown; <b>spXAU</b> 0x51eB…, <b>spBTC</b> 0x46E8… exist too."},
+  trackerfactory:{nm:"TrackerFactory",g:"factory",cl:"#a78bfa",ro:"Permissionlessly creates new pegs (TrackerDAOs) from a blueprint.",fn:["create_tracker","tracker_list","is_tracker"],ad:"0x7C87799cad38576ddB03881570bd62e7ac1daf49",rel:["trackerdao"],tip:"Anyone can mint a new soft-peg for any Chainlink-priced asset. The frontend discovers pegs from here, not a config file."},
+  peripheryfactory:{nm:"PeripheryFactory v2",g:"factory",cl:"#a78bfa",ro:"Permissionless, enumerable deploy of a peg's router + zapper + flash, keyed by (tracker, fee).",fn:["deploy_periphery","get_router","is_router"],ad:"0xdfD387aFFF2aDD0726dDA0fbE6ac7ee77F562D6D",rel:["leveragerouter","lpzapper","flashrouter"],tip:"Spins up the three stateless helpers for a peg, from audited blueprints, so UIs can trust them without a bytecode check. Reads tick spacing from the pool itself."},
+  leveragerouter:{nm:"LeverageRouter",g:"periphery",cl:"#a78bfa",ro:"One-tx ETH → pure N. Deposits to the DAO (gets shares + N), sells the shares into the spUSD/WETH pool, returns N + recovered ETH.",fn:["open_leverage"],ad:"0xdA387BdE50b4943162947ccDF4E9eca3dA70940E",rel:["trackerdao","pool","swaprouter","weth"],tip:"<b>The standard way to go long.</b> You end up holding only N (the leverage leg) — the stable P value is sold off into the pool, so your at-risk capital ≈ your premium."},
+  flashrouter:{nm:"FlashLeverageRouter",g:"periphery",cl:"#a78bfa",ro:"“Send exactly your premium.” Flash-borrows the P-side from Balancer so msg.value = premium = max loss; deploys your whole premium in one tx.",fn:["open_leverage","receiveFlashLoan"],ad:"0xF8a2DF8E9288a9b9dd56a0F6F749773dBb8A2957",rel:["trackerdao","pool","swaprouter","weth","balancer"],tip:"Same per-unit economics as LeverageRouter, but no change comes back — your full premium is the position. Larger P sale ⇒ a bit more pool slippage."},
+  lpzapper:{nm:"LPZapper",g:"periphery",cl:"#a78bfa",ro:"One-tx ETH → full-range spUSD/WETH v3 LP position (NFT to you), with the N forwarded back.",fn:["add_liquidity"],ad:"0x8828AF8682dC8B95DCC08a52F79E5d6Cb9c80aF1",rel:["trackerdao","pool","npm","weth"],tip:"Provide liquidity to the peg's pool in one step. You also receive the N leg minted along the way."},
+  ndesk:{nm:"SignedQuoteFiller  (N desk)",g:"desk",cl:"#22d3ee",ro:"Operator-run RFQ desk for the N leg — the first/only venue to SELL N. Signed EIP-712 quotes, on-chain directional floor.",fn:["fill_buy_n","fill_sell_n"],ad:"0x48c93eD52507DEe37d79eA37Df9ed7fAF739C8F1",rel:["trackerdao","optionseries","oraclehub"],tip:"<b>Not the protocol — an operator counterparty.</b> Buys/sells N at a signed price floored on-chain against oracle intrinsic. Deployed but not yet live (placeholder/unfunded)."},
+  stabledesk:{nm:"StableQuoteFiller  (stable desk)",g:"desk",cl:"#22d3ee",ro:"Operator-run RFQ desk for the spUSD leg — the positive-carry side. NAV-anchored floor, inventory-only (no mint-to-sell).",fn:["fill_buy_spusd","fill_sell_spusd"],ad:"0x520089CCFCB62cd79971afeBB3A3EA2E973E29cc",rel:["trackerdao","oraclehub"],tip:"Sibling to the N desk for the stable leg. Warehouses spUSD (which accrues NAV) and quotes around it. Deployed, not yet live."},
+  pool:{nm:"spUSD / WETH pool",g:"ext",cl:"#f472b6",ro:"Uniswap v3 pool, 0.3%. The P-sink: where the stable leg is bought and sold for WETH.",fn:["swap"],ad:"0x8362C2A9b13e0ba770D7bFE7C2d0ae0b33B603B9",rel:["leveragerouter","flashrouter","lpzapper","trackerdao","swaprouter"],tip:"The secondary market for the spUSD share vs WETH. The routers dump/borrow the P value here to net you out to pure N. Should sit near NAV (~$1) for clean pricing."},
+  swaprouter:{nm:"Uniswap SwapRouter02",g:"ext",cl:"#f472b6",ro:"Executes the spUSD↔WETH swaps for the routers.",fn:["exactInputSingle"],ad:"0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",rel:["pool"],tip:"Standard Uniswap v3 router the periphery calls to trade against the pool."},
+  npm:{nm:"Uniswap NPM",g:"ext",cl:"#f472b6",ro:"NonfungiblePositionManager — mints the LP NFT for the zapper.",fn:["mint"],ad:"0x1238536071E1c677A632429e3655c799b22cDA52",rel:["lpzapper","pool"],tip:"Manages full-range v3 liquidity positions for LPZapper."},
+  weth:{nm:"WETH9",g:"ext",cl:"#f472b6",ro:"Wrapped ETH — the pool's quote token; routers wrap/unwrap around swaps.",fn:["deposit","withdraw"],ad:"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",rel:["pool"],tip:"The pool trades spUSD against WETH; routers unwrap back to native ETH for you."},
+  balancer:{nm:"Balancer v2 Vault",g:"ext",cl:"#f472b6",ro:"0-fee flash-loan source for the FlashLeverageRouter's P-side working capital.",fn:["flashLoan"],ad:"0xBA12222222228d8Ba445958a75a0704d566BF2C8",rel:["flashrouter"],tip:"Lends WETH within a single tx so you only post your premium; repaid from the P sale before the tx ends."},
+};
+const GROUPS=[["core","Core primitive","#7dd3fc"],["factory","Factories","#a78bfa"],["wrapper","Wrapper DAO (the pegs)","#34d399"],["periphery","Periphery helpers","#a78bfa"],["desk","Trading desks (RFQ)","#22d3ee"],["ext","External (Uniswap · Balancer · Chainlink)","#f472b6"]];
+const BS="https://eth-sepolia.blockscout.com/address/";
+
+/* render map */
+const map=document.getElementById('map');
+GROUPS.forEach(([g,label,cl])=>{
+  const ids=Object.keys(C).filter(k=>C[k].g===g); if(!ids.length)return;
+  const wrap=document.createElement('div'); wrap.className='group';
+  wrap.innerHTML=`<div class="glabel" style="color:${cl}">${label}</div>`;
+  const gc=document.createElement('div'); gc.className='gcards';
+  ids.forEach(id=>{
+    const c=C[id]; const card=document.createElement('div'); card.className='cc'; card.style.setProperty('--cl',c.cl); card.dataset.id=id;
+    const addr = c.ad.startsWith('0x') ? `<a href="${BS}${c.ad}" target="_blank" rel="noopener">${c.ad.slice(0,7)}…${c.ad.slice(-5)}</a>` : `<span>${c.ad}</span>`;
+    card.innerHTML=`
+      <div class="tip">${c.tip}</div>
+      <div class="nm"><span class="dot"></span>${c.nm}</div>
+      <div class="ro">${c.ro}</div>
+      <div class="fn">${c.fn.map(f=>`<span>${f}()</span>`).join('')}</div>
+      <div class="ad">${addr}</div>`;
+    gc.appendChild(card);
+  });
+  wrap.appendChild(gc); map.appendChild(wrap);
+});
+document.getElementById('legend').innerHTML=GROUPS.map(([g,l,cl])=>`<span><i style="background:${cl}"></i>${l}</span>`).join('');
+
+/* hover-highlight relationships */
+const cards=[...document.querySelectorAll('.cc')];
+function rel(id){const set=new Set([id]);(C[id].rel||[]).forEach(r=>set.add(r));Object.keys(C).forEach(k=>{if((C[k].rel||[]).includes(id))set.add(k);});return set;}
+cards.forEach(card=>{
+  card.addEventListener('mouseenter',()=>{const s=rel(card.dataset.id);cards.forEach(c=>{c.classList.toggle('lit',s.has(c.dataset.id));c.classList.toggle('dim',!s.has(c.dataset.id));});});
+  card.addEventListener('mouseleave',()=>cards.forEach(c=>{c.classList.remove('lit','dim');}));
+});
+
+/* ---------- price sim ---------- */
+const S=880, r=0.5; // strike, strike ratio (genesis x0 = S/r = 1760)
+const px=document.getElementById('px');
+function fmt(n){return '$'+n.toLocaleString()}
+function sim(){
+  const x=+px.value;
+  const pp=Math.min(1, S/x);      // payout P fraction
+  const nn=1-pp;                   // payout N fraction
+  document.getElementById('pxv').textContent=fmt(x);
+  document.getElementById('pv').textContent=pp.toFixed(3);
+  document.getElementById('nv').textContent=nn.toFixed(3);
+  document.getElementById('ppbar').style.width=(pp*100)+'%';
+  document.getElementById('ppbar').textContent= pp>0.12? 'P '+pp.toFixed(2):'';
+  document.getElementById('nnbar').textContent= nn>0.12? 'N '+nn.toFixed(2):'';
+  let note;
+  if(x<=S){note=`ETH at/below the strike: <b style="color:var(--p)">P holds the full 1 ETH</b> (the peg is fully covered) and <b style="color:var(--n)">N → 0</b> (the leverage bet has expired worthless — but you only ever lost the premium, never more).`;}
+  else{const lev=(1/r).toFixed(1); note=`ETH above the strike: P caps at <b>S/x</b> while <b style="color:var(--n)">N captures the upside</b>. Near the strike a small ETH move swings N hard — that's the <b>${lev}× leverage</b>, with loss capped at what you paid and <b>no liquidation</b>.`;}
+  document.getElementById('simnote').innerHTML=note;
+}
+px.addEventListener('input',sim); sim();
+
+/* ---------- flow explorer ---------- */
+const A=(id)=>({id,nm:C[id].nm.split('  ')[0],cl:C[id].cl,as:C[id].g});
+const USER={id:'user',nm:'You',cl:'#6b8cff',as:'wallet'};
+const FLOWS={
+  lev:{label:"Standard · LeverageRouter", actors:['user','leveragerouter','trackerdao','optionseries','pool','swaprouter'],
+    steps:[
+      {a:['user','leveragerouter'],t:"You send your premium",call:"LeverageRouter.open_leverage{value: premium}(min_eth_out)",p:"You call the router with the ETH you're willing to risk and a slippage floor. One transaction — the router orchestrates the rest."},
+      {a:['leveragerouter','trackerdao'],t:"Router deposits into the peg",call:"TrackerDAO.deposit{value}()",p:"The router forwards the ETH to the spUSD DAO to enter the system at NAV."},
+      {a:['trackerdao','optionseries','oraclehub'],t:"The ETH is split into P + N",call:"OptionSeries.split()  ·  OracleHub.latest_price()",p:"The DAO splits the ETH at the active series — minting <b>P</b> and <b>N</b>. It <b>keeps the P</b> (handing the router spUSD shares at NAV) and <b>forwards the N</b> (your leverage leg) to the router. P+N=1 ETH; oracle read only for the NAV math."},
+      {a:['leveragerouter','swaprouter','pool'],t:"Sell the stable leg for ETH",call:"SwapRouter.exactInputSingle( spUSD → WETH )",p:"The router sells the spUSD shares into the <b>spUSD/WETH pool</b> for WETH. This strips out the stable value, leaving a <b>pure leveraged-long N</b> position. (This is why the pool must sit near NAV.)"},
+      {a:['leveragerouter','user'],t:"You receive N + your change",call:"→ (n_token, n_amount, eth_returned)",p:"The router unwraps the WETH and returns the <b>N leg + recovered ETH</b>. Net at-risk ≈ your premium; you now hold N: leveraged long ETH, <b>capped loss, no liquidation, no funding</b>."},
+    ]},
+  flash:{label:"Full-premium · FlashLeverageRouter", actors:['user','flashrouter','balancer','trackerdao','optionseries','pool'],
+    steps:[
+      {a:['user','flashrouter'],t:"Send exactly your premium",call:"FlashLeverageRouter.open_leverage{value: premium}(flash_amount, min_eth_out)",p:"<b>msg.value = your premium = your max loss.</b> No change comes back — your whole premium becomes the position."},
+      {a:['flashrouter','balancer'],t:"Flash-borrow the P-side",call:"BalancerVault.flashLoan([WETH], [flash_amount])",p:"The router borrows WETH (0 fee) for a single tx so it can split a larger notional than your premium alone."},
+      {a:['flashrouter','trackerdao','optionseries'],t:"Split the full notional",call:"TrackerDAO.deposit{value: premium+flash}()  →  split()",p:"Premium + flash are deposited together: bigger P + N minted. The router keeps the N for you."},
+      {a:['flashrouter','pool','balancer'],t:"Sell P, repay the flash",call:"SwapRouter( spUSD → WETH )  →  repay BalancerVault",p:"The P (spUSD) is sold into the pool for WETH; the flash loan is repaid in the same tx. Larger P sale ⇒ a bit more slippage than the standard router."},
+      {a:['flashrouter','user'],t:"Keep the N + residual",call:"→ (n_token, n_amount, eth_returned)",p:"You receive the N leg and any tiny residual. Same per-unit economics as the standard path, but your entire premium is deployed at once."},
+    ]},
+  rfq:{label:"Operator-quoted · RFQ desk", actors:['user','ndesk','optionseries','oraclehub'],
+    steps:[
+      {a:['user'],t:"Request a quote (off-chain)",call:"POST /quote { side, n_amount }",p:"The frontend asks the operator's quoter service for a price. The quoter signs an <b>EIP-712 quote</b> (price, size, deadline) with the desk's approved key. <i>No transaction yet.</i>"},
+      {a:['user','ndesk'],t:"Submit the signed quote",call:"SignedQuoteFiller.fill_buy_n{value: cost}(quote, v,r,s)",p:"You send the signed quote on-chain with exactly the quoted ETH cost. The desk is your <b>counterparty — an operator, not the protocol.</b>"},
+      {a:['ndesk','oraclehub','optionseries'],t:"Desk verifies + delivers N",call:"check sig · floor vs intrinsic · split() if needed",p:"On-chain the desk verifies the signature and that the price clears a <b>directional floor</b> computed from a fresh oracle read (so even a stolen key can't fill at a loss). It hands you N from inventory, or <b>JIT-mints</b> via split() and keeps the P. <b>No Uniswap pool touched.</b>"},
+      {a:['ndesk','user'],t:"You hold N",call:"→ n_amount",p:"You get N at the operator's quoted price. The same desk can also <b>buy your N back</b> later (fill_sell_n) — the first venue where the leverage leg is actually sellable."},
+    ]},
+};
+
+let flow='lev', step=0;
+const tabs=document.getElementById('tabs');
+Object.entries(FLOWS).forEach(([k,f])=>{const b=document.createElement('div');b.className='tab'+(k===flow?' on':'');b.textContent=f.label;b.onclick=()=>{flow=k;step=0;render();};b.dataset.k=k;tabs.appendChild(b);});
+
+function actorObj(id){return id==='user'?USER:A(id);}
+function render(){
+  [...tabs.children].forEach(b=>b.classList.toggle('on',b.dataset.k===flow));
+  const f=FLOWS[flow], cur=f.steps[step];
+  // rail
+  const rail=document.getElementById('rail'); rail.innerHTML='';
+  f.actors.forEach((id,i)=>{
+    const o=actorObj(id); const on=cur.a.includes(id);
+    const el=document.createElement('div'); el.className='actor'+(on?' on':''); el.style.setProperty('--cl',o.cl);
+    el.innerHTML=`<div class="an" style="color:${on?o.cl:'#cfd6e3'}">${o.nm}</div><div class="as">${o.as}</div>`;
+    rail.appendChild(el);
+    if(i<f.actors.length-1){const a=document.createElement('div');a.className='raw';a.textContent='→';rail.appendChild(a);}
+  });
+  // dots
+  const dots=document.getElementById('dots'); dots.innerHTML='';
+  f.steps.forEach((s,i)=>{const d=document.createElement('div');d.className='d'+(i===step?' on':'');d.textContent=i+1;d.onclick=()=>{step=i;render();};dots.appendChild(d);});
+  document.getElementById('prev').disabled=step===0;
+  document.getElementById('next').disabled=step===f.steps.length-1;
+  // desc
+  document.getElementById('desc').innerHTML=`
+    <div class="st"><span class="stn">${step+1} / ${f.steps.length}</span><span class="stt">${cur.t}</span></div>
+    <div class="call">${cur.call}</div>
+    <p>${cur.p}</p>`;
+}
+document.getElementById('prev').onclick=()=>{if(step>0){step--;render();}};
+document.getElementById('next').onclick=()=>{const f=FLOWS[flow];if(step<f.steps.length-1){step++;render();}};
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')document.getElementById('next').click();if(e.key==='ArrowLeft')document.getElementById('prev').click();});
+render();
+</script>
+</body>
+</html>
