@@ -1,5 +1,7 @@
 # Solo RFQ Desk — frontend integration handoff (for the dapp builder)
 
+> **⤳ Architecture note:** the end-state is the crowd-owned **immutable autonomous vault** (Earn-only funding, **no quoter service**, buy-from-vault on-chain) — see [`autonomous-vault-spec.md`](autonomous-vault-spec.md). Per its GO/NO-GO the operated desks below remain the **interim** venue (prove demand + harden settlement on pausable contracts first), so this handoff **stands for now**.
+
 > Self-contained handoff to wire the **operator-quoted RFQ desk** (`SignedQuoteFiller`)
 > into the Gimbal frontend. This is the first and only venue where a user can **sell
 > the N (leverage) leg**, plus a quote-driven way to buy it. Full design:

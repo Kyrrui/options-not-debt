@@ -1,5 +1,7 @@
 # Gimbal P3 — Crowdsourced market maker (option-writing Earn vault) (spec)
 
+> **⤳ Unified into [`autonomous-vault-spec.md`](autonomous-vault-spec.md)** — the crowd-owned immutable end-state folds this in. This doc stays the detail for its piece; the master holds the architecture + the **GO/NO-GO** (prove demand on the *pausable* operated desks first, then freeze immutable — immutability is a one-way door).
+
 > Build spec, not a sketch. An **epoch-locked, ERC-4626-ish pooled "Earn" vault** that is the
 > **backing capital** for Gimbal's already-built signed-quote desks. LPs deposit collateral; the
 > desks **WRITE** the N (leverage-long / call) and — once P1 lands — M (leverage-short / put) legs

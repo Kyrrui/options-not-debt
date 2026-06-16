@@ -1,5 +1,7 @@
 # Gimbal P1 — Debt-free leveraged SHORT (stable-collateralized put series) (spec)
 
+> **⤳ Unified into [`autonomous-vault-spec.md`](autonomous-vault-spec.md)** — the crowd-owned immutable end-state folds this in. This doc stays the detail for its piece; the master holds the architecture + the **GO/NO-GO** (prove demand on the *pausable* operated desks first, then freeze immutable — immutability is a one-way door).
+
 > Build spec, not a sketch. A **new core primitive** — `PutOptionSeries.vy` — that is the algebraic **mirror** of the deployed call primitive (`OptionSeries.vy`), plus a `PutSeriesFactory.vy` and a **third RFQ desk sibling**, `ShortQuoteFiller.vy`, alongside the live `SignedQuoteFiller` (N leg, Sepolia `0x48c93eD52507DEe37d79eA37Df9ed7fAF739C8F1`) and `StableQuoteFiller` (spUSD leg). It gives Gimbal a **debt-free leveraged SHORT on ETH**: lock **1 stable unit** → mint **M + L**, get the **M** leg that **gains as ETH falls**, with **max loss = the premium paid, NO liquidation, NO margin, fully collateralized by construction.** It is the mirror of the leveraged LONG (the N leg) and *doubles* the product. P1 in `docs/handoffs/split-derived-roadmap.md`.
 >
 > It reuses everything: `OptionSeries`'s split/merge/lazy-one-shot-settle/redeem machinery (mirrored), the `SeriesFactory` blueprint/dedupe pattern, the `OracleHub` ETH/USD read, and the N/stable desks' EIP-712 + G1–G6 guardrail skeleton — generalized by the same *subtraction* the dated `SeriesQuoteFiller` uses (`leverage-menu-spec.md §3.3`), not copied verbatim.

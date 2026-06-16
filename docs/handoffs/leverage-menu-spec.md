@@ -1,5 +1,7 @@
 # Gimbal P2 — Leverage-tier menu (multi-strike dated series) (spec)
 
+> **⤳ Unified into [`autonomous-vault-spec.md`](autonomous-vault-spec.md)** — the crowd-owned immutable end-state folds this in. This doc stays the detail for its piece; the master holds the architecture + the **GO/NO-GO** (prove demand on the *pausable* operated desks first, then freeze immutable — immutability is a one-way door).
+
 > Build spec, not a sketch. **P2** of `split-derived-roadmap.md`. A **leverage market** layer that
 > exposes Split's `[2,5,10,20]`-style menu — where **leverage is set by the option STRIKE/premium, not
 > by margin** (`leverage = 1/(1−r)`, `r = STRIKE/x₀ = spot/premiumPerN`, exactly Split's formula) — by
