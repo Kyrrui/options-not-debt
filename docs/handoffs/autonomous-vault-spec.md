@@ -5,6 +5,17 @@
 > **This SUPERSEDES the operator-RFQ desk model** (the deployed `SignedQuoteFiller` `0x48c93eD52507DEe37d79eA37Df9ed7fAF739C8F1` and `StableQuoteFiller` `0x520089CCFCB62cd79971afeBB3A3EA2E973E29cc`, each carrying an `owner` + a privileged `quoter` signer = two centralization points) and **unifies P1 (short put series), P2 (dated leverage menu), and P3 (writer vault)** into one bytecode. The precedent that ownerless + signer-less is feasible is in our own code: `TrackerDAO` has no owner and no signer — it prices `sell_p`/`fill_roll` as `MAX_EDGE`-bounded ramped auctions off the oracle intrinsic and is maintained by a permissionless `sync()`.
 >
 > **Sepolia testnet, research code, unaudited. v1 is fully immutable BY CHOICE — a bug's only recourse is redeploy-v2 + LP migration; nothing can stop, pause, or patch the live contract. A mandatory mainnet-revisit note (timelock guardian) is in §5. A named legal entity accountable for the pooled funds must be established before any non-testnet deposit — ownerlessness removes the answer to "who is liable," not the question.**
+>
+> **⤳ SHIPPED (Sepolia): the minimal subset of this spec is built + tested.** Per Kyle's
+> "keep it simple for Sepolia," this master spec is collapsed to its smallest honest core in
+> [`simple-vault-sepolia-spec.md`](simple-vault-sepolia-spec.md) and implemented as
+> [`GimbalSimpleVault.vy`](../../src/periphery/GimbalSimpleVault.vy) (13/13 fork tests green on
+> live Sepolia, [`GimbalSimpleVault.fork.t.sol`](../../test/GimbalSimpleVault.fork.t.sol)). It is
+> immutable/ownerless/on-chain-priced/Earn-funded, but **restricted to the existing TrackerDAO
+> ~2× series** (no menu), **junior-only**, **ETH/N-only**, **write-only**, **no epochs** — which
+> sidesteps the NO-GO blockers (F-V1-SCOPE, F-SETTLE-STALE at ≲3×, F-DUST, F-SENIOR-COLD) **by
+> scope**. Safe to freeze *only because the funds are testnet*. Everything deferred is the
+> MAINNET CHECKLIST in that doc — this full master spec is the mainnet target.
 
 ```
 ARCHITECTURE BANNER
