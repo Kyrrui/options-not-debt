@@ -23,13 +23,12 @@
   .mut{color:var(--mut)} .small{font-size:12.5px}
   h1{font-size:30px;letter-spacing:-.02em;margin:0 0 4px} h2{font-size:19px;letter-spacing:-.01em;margin:0 0 4px}
   .sec{margin-top:46px}
-  .sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .sec-h{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px;flex-wrap:wrap}
   .sec-h .num{font-variant-numeric:tabular-nums;color:var(--mut2);font-weight:700;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:2px 8px}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
   .chip{font-size:12px;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
   .chip b{color:var(--ink)}
 
-  /* primitive */
   .prim{display:grid;grid-template-columns:1.05fr .95fr;gap:20px}
   @media(max-width:860px){.prim{grid-template-columns:1fr}}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
@@ -41,20 +40,15 @@
   .tok.n{box-shadow:inset 0 0 0 1px rgba(251,191,36,.35)} .tok.n .t{color:var(--n)}
   .arrow{color:var(--mut2);font-size:20px;display:flex;flex-direction:column;align-items:center;line-height:1}
   .arrow small{font-size:10px;color:var(--mut2);margin-top:2px}
-  .eq{text-align:center;margin:14px 0 6px;font-size:13px;color:var(--mut)}
-  .eq b{color:var(--ink)}
-  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut);margin-left:6px}
+  .eq{text-align:center;margin:14px 0 6px;font-size:13px;color:var(--mut)} .eq b{color:var(--ink)}
 
-  /* slider sim */
   .sim label{font-size:12px;color:var(--mut)}
   .sim input[type=range]{width:100%;accent-color:var(--eth);margin:8px 0 4px}
   .bar{height:34px;border-radius:9px;overflow:hidden;display:flex;border:1px solid var(--line2);background:#0e1424;margin:10px 0 6px}
   .bar .pp{background:linear-gradient(180deg,#34d39933,#34d39911);border-right:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--p);white-space:nowrap;transition:width .12s}
   .bar .nn{background:linear-gradient(180deg,#fbbf2433,#fbbf2411);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--n);white-space:nowrap;transition:width .12s;flex:1}
-  .simstats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin-top:4px}
-  .simstats b{font-variant-numeric:tabular-nums}
+  .simstats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin-top:4px} .simstats b{font-variant-numeric:tabular-nums}
 
-  /* contract map */
   .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
   .group{grid-column:span 12;}
   .glabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut2);margin:8px 2px 8px;display:flex;align-items:center;gap:8px}
@@ -71,21 +65,20 @@
   .cc.dim{opacity:.26;filter:saturate(.5)}
   .cc.lit{opacity:1;border-color:var(--cl);box-shadow:0 0 0 1px var(--cl), 0 14px 34px rgba(0,0,0,.55)}
   .tip{position:absolute;z-index:20;left:14px;right:14px;bottom:calc(100% + 8px);background:#0c1322;border:1px solid var(--line2);border-radius:11px;padding:11px 12px;font-size:12.5px;color:var(--mut);box-shadow:var(--shadow);opacity:0;transform:translateY(4px);pointer-events:none;transition:.14s}
-  .cc:hover .tip{opacity:1;transform:translateY(0)}
-  .tip b{color:var(--ink)}
+  .cc:hover .tip{opacity:1;transform:translateY(0)} .tip b{color:var(--ink)}
 
-  /* flow explorer */
+  .explorer{margin-top:4px}
   .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
   .tab{font-size:13px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mut);cursor:pointer;transition:.12s}
   .tab:hover{border-color:var(--line2);color:var(--ink)}
   .tab.on{background:linear-gradient(180deg,rgba(107,140,255,.22),rgba(107,140,255,.06));border-color:rgba(107,140,255,.5);color:#dfe7ff}
   .rail{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:6px 0 18px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
-  .actor{flex:1;min-width:118px;border-radius:11px;padding:11px 10px;text-align:center;border:1px solid var(--line);background:#0e1424;transition:.16s;position:relative;border-top:3px solid var(--cl,#888);opacity:.4}
+  .actor{flex:1;min-width:112px;border-radius:11px;padding:11px 10px;text-align:center;border:1px solid var(--line);background:#0e1424;transition:.16s;position:relative;border-top:3px solid var(--cl,#888);opacity:.4}
   .actor.on{opacity:1;box-shadow:0 0 0 1px var(--cl),0 0 24px -6px var(--cl);transform:translateY(-2px)}
   .actor .an{font-weight:700;font-size:12.5px} .actor .as{font-size:10.5px;color:var(--mut)}
   .raw{display:flex;align-items:center;color:var(--mut2);font-size:18px;padding:0 4px}
   .stepbar{display:flex;align-items:center;gap:10px;margin:4px 0 14px;flex-wrap:wrap}
-  .dots{display:flex;gap:7px}
+  .dots{display:flex;gap:7px;flex-wrap:wrap}
   .d{width:26px;height:26px;border-radius:50%;border:1px solid var(--line2);background:var(--panel);color:var(--mut);display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:.12s;font-variant-numeric:tabular-nums}
   .d:hover{border-color:var(--eth)} .d.on{background:var(--eth);border-color:var(--eth);color:#06122e;font-weight:700}
   .nav{display:flex;gap:8px;margin-left:auto}
@@ -97,6 +90,7 @@
   .desc .stt{font-weight:700;font-size:15.5px}
   .desc .call{font-family:ui-monospace,monospace;font-size:12px;color:var(--desk);background:#091420;border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin:9px 0;display:inline-block}
   .desc p{margin:6px 0;color:var(--mut)} .desc b{color:var(--ink)}
+  .cyc{font-size:12px;color:var(--mut2);margin:0 0 12px} .cyc b{color:var(--n)}
   .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--mut)}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
   .foot{margin-top:40px;color:var(--mut2);font-size:12px;border-top:1px solid var(--line);padding-top:18px}
@@ -147,11 +141,11 @@
       <div class="card sim">
         <div style="font-weight:700;margin-bottom:2px">See it move</div>
         <div class="mut small" style="margin-bottom:10px">Drag the ETH price. The 1 ETH of collateral splits between the two legs — that split <i>is</i> the payoff.</div>
-        <label>ETH price (USD) — strike S = <b id="sval">$880</b> · strike ratio r = 0.5 → <b style="color:var(--n)">2× leverage</b> on N</label>
-        <input id="px" type="range" min="450" max="3500" value="1760" step="10"/>
+        <label>ETH price (USD) — strike S = <b id="sval">$838</b> · the live spUSD genesis (ETH≈$1,676 × r=0.5) → <b style="color:var(--n)">2× leverage</b> on N</label>
+        <input id="px" type="range" min="450" max="3500" value="1676" step="10"/>
         <div class="bar"><div class="pp" id="ppbar"></div><div class="nn" id="nnbar"></div></div>
         <div class="simstats">
-          <div>ETH = <b id="pxv">$1,760</b></div>
+          <div>ETH = <b id="pxv">$1,676</b></div>
           <div style="color:var(--p)">P (stable) = <b id="pv">0.500</b> ETH</div>
           <div style="color:var(--n)">N (leverage) = <b id="nv">0.500</b> ETH</div>
         </div>
@@ -167,41 +161,48 @@
     <div class="legend" id="legend"></div>
   </section>
 
-  <!-- 3. FLOW -->
+  <!-- 3. BUY FLOW -->
   <section class="sec">
-    <div class="sec-h"><span class="num">03</span><h2>Flow explorer — “buy a leverage position”</h2><span class="mut small">three ways to end up holding N. Step through to see which contracts are touched.</span></div>
-    <div class="tabs" id="tabs"></div>
-    <div class="rail" id="rail"></div>
-    <div class="stepbar">
-      <div class="dots" id="dots"></div>
-      <div class="nav"><button class="btn" id="prev">‹ Prev</button><button class="btn" id="next">Next ›</button></div>
-    </div>
-    <div class="desc" id="desc"></div>
+    <div class="sec-h"><span class="num">03</span><h2>Flow explorer — open a position (go long)</h2><span class="mut small">three ways to end up holding N. Step through to see which contracts are touched.</span></div>
+    <div class="explorer" id="buyflow"></div>
+  </section>
+
+  <!-- 4. EXIT FLOW -->
+  <section class="sec">
+    <div class="sec-h"><span class="num">04</span><h2>Flow explorer — exit / unwind</h2><span class="mut small">how each leg gets back to ETH. Note: there is no AMM pool for N — only the desk, or settlement.</span></div>
+    <div class="explorer" id="exitflow"></div>
+  </section>
+
+  <!-- 5. PEG LIFECYCLE -->
+  <section class="sec">
+    <div class="sec-h"><span class="num">05</span><h2>The peg lifecycle — how it maintains itself</h2><span class="mut small">the TrackerDAO automation. All rules, no voting, no AI — every step is permissionless.</span></div>
+    <div class="cyc">A continuous cycle, driven by anyone calling <code>sync()</code> + two time-ramped auctions. It <b>↻ repeats</b> forever; worst case is tracking drift, never bad debt.</div>
+    <div class="explorer" id="lifecycle"></div>
   </section>
 
   <div class="foot">
-    Built as a learning map of the Gimbal ecosystem <b>as deployed today</b> (Sepolia, chain 11155111). All contracts source-verified on Blockscout.
+    A learning map of the Gimbal ecosystem <b>as deployed today</b> (Sepolia, chain 11155111). Contracts source-verified on Blockscout.
     The trading desks (SignedQuoteFiller / StableQuoteFiller) are deployed but <b>not yet live</b> (placeholder operator, unfunded).
-    Hover the cards for what each contract does; step the flow for what gets touched.
+    Hover the cards for what each contract does; step the flows for what gets touched. The slider strike is the live spUSD genesis (S≈$838); intra-day numbers drift with the feed.
   </div>
 </div>
 
 <script>
 /* ---------- contract data ---------- */
 const C = {
-  oraclehub:{nm:"OracleHub",g:"core",cl:"#7dd3fc",ro:"Chainlink feed registry. Computes the index x = ETH priced in the asset = (ETH/USD) ÷ (ASSET/USD).",fn:["latest_price","register","feeds"],ad:"0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62",rel:["optionseries","trackerdao"],tip:"<b>The slow oracle.</b> Per ethresear.ch t/25036 the system only needs a pull-based price, read <b>once at settlement</b> — it never pushes prices and never triggers liquidations (there are none). Assets are content-addressed by (feed, heartbeat)."},
-  optiontoken:{nm:"OptionToken",g:"core",cl:"#7dd3fc",ro:"Minimal ERC-20 for one leg (a P or an N). Mint/burn restricted to its OptionSeries.",fn:["mint","burn","transfer"],ad:"blueprint",rel:["optionseries"],tip:"Each P and each N is its own ERC-20, deployed by the series. Self-describing symbols like <code>P-USD-880-260710</code> so vintages never collide."},
-  optionseries:{nm:"OptionSeries",g:"core",cl:"#7dd3fc",ro:"The P/N primitive. split() ETH→P+N · merge() P+N→ETH (oracle-free) · settle() at maturity · redeem_p/redeem_n.",fn:["split","merge","settle","redeem_p","redeem_n"],ad:"per-series",rel:["optiontoken","oraclehub","trackerdao","seriesfactory"],tip:"<b>P + N = 1 ETH, always.</b> Lock 1 ETH → mint 1 P + 1 N. Merge any time, no oracle. At maturity, one oracle read fixes the payout split. No liquidation anywhere."},
+  oraclehub:{nm:"OracleHub",g:"core",cl:"#7dd3fc",ro:"Chainlink feed registry. Computes the index x = ETH priced in the asset = (ETH/USD) ÷ (ASSET/USD).",fn:["latest_price","register","feeds"],ad:"0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62",rel:["optionseries","trackerdao","ndesk","stabledesk"],tip:"<b>The slow oracle.</b> Per ethresear.ch t/25036 the system only needs a pull-based price, read <b>once at settlement</b> — it never pushes prices and never triggers liquidations (there are none). Assets are content-addressed by (feed, heartbeat)."},
+  optiontoken:{nm:"OptionToken",g:"core",cl:"#7dd3fc",ro:"Minimal ERC-20 for one leg (a P or an N). Mint/burn restricted to its OptionSeries.",fn:["mint","burn","transfer"],ad:"blueprint",rel:["optionseries"],tip:"Each P and each N is its own ERC-20, deployed by the series. Self-describing symbols like <code>P-USD-838-260710</code> so vintages never collide."},
+  optionseries:{nm:"OptionSeries",g:"core",cl:"#7dd3fc",ro:"The P/N primitive. split() ETH→P+N · merge() P+N→ETH (oracle-free) · settle() at maturity · redeem_p/redeem_n.",fn:["split","merge","settle","redeem_p","redeem_n"],ad:"per-series",rel:["optiontoken","oraclehub","trackerdao","seriesfactory","ndesk"],tip:"<b>P + N = 1 ETH, always.</b> Lock 1 ETH → mint 1 P + 1 N. Merge any time, no oracle. At maturity, one oracle read fixes the payout split. No liquidation anywhere."},
   seriesfactory:{nm:"SeriesFactory",g:"factory",cl:"#a78bfa",ro:"Deploys OptionSeries (and their P/N token pair) from EIP-5202 blueprints.",fn:["create_series"],ad:"0x63C29F7981b45cbbE9D6c5E20d892D70f6db19C2",rel:["optionseries"],tip:"Permissionless series creation with known bytecode. The TrackerDAO calls this to spin up each new vintage as it rolls."},
-  trackerdao:{nm:"TrackerDAO  (= spUSD / spXAU / spBTC)",g:"wrapper",cl:"#34d399",ro:"The wrapper DAO + the peg's ERC-20. deposit() ETH→split, keeps P (mints shares), hands N to you. redeem() oracle-free. sync()/fill_roll()/sell_p() automate the peg.",fn:["deposit","redeem","sync","fill_roll","sell_p","share_price"],ad:"0x80A229e1d85fd75511B889D0e7a2A8CA34f94FAE",rel:["optionseries","oraclehub","trackerfactory","pool","leveragerouter","stabledesk"],tip:"<b>Holds only P, never N</b> — speculators hold N. Issues a share token soft-pegged to 1 unit of the asset (1 USD for spUSD). All rules, no voting, no AI. <b>spUSD</b> shown; <b>spXAU</b> 0x51eB…, <b>spBTC</b> 0x46E8… exist too."},
-  trackerfactory:{nm:"TrackerFactory",g:"factory",cl:"#a78bfa",ro:"Permissionlessly creates new pegs (TrackerDAOs) from a blueprint.",fn:["create_tracker","tracker_list","is_tracker"],ad:"0x7C87799cad38576ddB03881570bd62e7ac1daf49",rel:["trackerdao"],tip:"Anyone can mint a new soft-peg for any Chainlink-priced asset. The frontend discovers pegs from here, not a config file."},
+  trackerdao:{nm:"TrackerDAO  (= spUSD / spXAU / spBTC)",g:"wrapper",cl:"#34d399",ro:"The wrapper DAO + the peg's ERC-20. deposit() ETH→split, keeps P (mints shares), hands N to you. redeem() oracle-free. sync()/fill_roll()/sell_p() automate the peg.",fn:["deposit","redeem","sync","fill_roll","sell_p","share_price"],ad:"0x80A229e1d85fd75511B889D0e7a2A8CA34f94FAE",rel:["optionseries","oraclehub","trackerfactory","pool","leveragerouter","flashrouter","lpzapper","stabledesk"],tip:"<b>Holds only P, never N</b> — speculators hold N. Issues a share token soft-pegged to 1 unit of the asset (1 USD for spUSD). All rules, no voting, no AI. <b>spUSD</b> shown; <b>spXAU</b> 0x51eB…, <b>spBTC</b> 0x46E8… exist too."},
+  trackerfactory:{nm:"TrackerFactory",g:"factory",cl:"#a78bfa",ro:"Permissionlessly creates new pegs (TrackerDAOs) from a blueprint.",fn:["create_tracker","tracker_list","is_tracker"],ad:"0x7C87799cad38576ddB03881570bd62e7ac1daf49",rel:["trackerdao"],tip:"Anyone can mint a new soft-peg for any Chainlink-priced asset. The frontend discovers pegs from here, not a config file. <b>Higher leverage = a new tracker with a higher strike ratio.</b>"},
   peripheryfactory:{nm:"PeripheryFactory v2",g:"factory",cl:"#a78bfa",ro:"Permissionless, enumerable deploy of a peg's router + zapper + flash, keyed by (tracker, fee).",fn:["deploy_periphery","get_router","is_router"],ad:"0xdfD387aFFF2aDD0726dDA0fbE6ac7ee77F562D6D",rel:["leveragerouter","lpzapper","flashrouter"],tip:"Spins up the three stateless helpers for a peg, from audited blueprints, so UIs can trust them without a bytecode check. Reads tick spacing from the pool itself."},
   leveragerouter:{nm:"LeverageRouter",g:"periphery",cl:"#a78bfa",ro:"One-tx ETH → pure N. Deposits to the DAO (gets shares + N), sells the shares into the spUSD/WETH pool, returns N + recovered ETH.",fn:["open_leverage"],ad:"0xdA387BdE50b4943162947ccDF4E9eca3dA70940E",rel:["trackerdao","pool","swaprouter","weth"],tip:"<b>The standard way to go long.</b> You end up holding only N (the leverage leg) — the stable P value is sold off into the pool, so your at-risk capital ≈ your premium."},
   flashrouter:{nm:"FlashLeverageRouter",g:"periphery",cl:"#a78bfa",ro:"“Send exactly your premium.” Flash-borrows the P-side from Balancer so msg.value = premium = max loss; deploys your whole premium in one tx.",fn:["open_leverage","receiveFlashLoan"],ad:"0xF8a2DF8E9288a9b9dd56a0F6F749773dBb8A2957",rel:["trackerdao","pool","swaprouter","weth","balancer"],tip:"Same per-unit economics as LeverageRouter, but no change comes back — your full premium is the position. Larger P sale ⇒ a bit more pool slippage."},
   lpzapper:{nm:"LPZapper",g:"periphery",cl:"#a78bfa",ro:"One-tx ETH → full-range spUSD/WETH v3 LP position (NFT to you), with the N forwarded back.",fn:["add_liquidity"],ad:"0x8828AF8682dC8B95DCC08a52F79E5d6Cb9c80aF1",rel:["trackerdao","pool","npm","weth"],tip:"Provide liquidity to the peg's pool in one step. You also receive the N leg minted along the way."},
   ndesk:{nm:"SignedQuoteFiller  (N desk)",g:"desk",cl:"#22d3ee",ro:"Operator-run RFQ desk for the N leg — the first/only venue to SELL N. Signed EIP-712 quotes, on-chain directional floor.",fn:["fill_buy_n","fill_sell_n"],ad:"0x48c93eD52507DEe37d79eA37Df9ed7fAF739C8F1",rel:["trackerdao","optionseries","oraclehub"],tip:"<b>Not the protocol — an operator counterparty.</b> Buys/sells N at a signed price floored on-chain against oracle intrinsic. Deployed but not yet live (placeholder/unfunded)."},
   stabledesk:{nm:"StableQuoteFiller  (stable desk)",g:"desk",cl:"#22d3ee",ro:"Operator-run RFQ desk for the spUSD leg — the positive-carry side. NAV-anchored floor, inventory-only (no mint-to-sell).",fn:["fill_buy_spusd","fill_sell_spusd"],ad:"0x520089CCFCB62cd79971afeBB3A3EA2E973E29cc",rel:["trackerdao","oraclehub"],tip:"Sibling to the N desk for the stable leg. Warehouses spUSD (which accrues NAV) and quotes around it. Deployed, not yet live."},
-  pool:{nm:"spUSD / WETH pool",g:"ext",cl:"#f472b6",ro:"Uniswap v3 pool, 0.3%. The P-sink: where the stable leg is bought and sold for WETH.",fn:["swap"],ad:"0x8362C2A9b13e0ba770D7bFE7C2d0ae0b33B603B9",rel:["leveragerouter","flashrouter","lpzapper","trackerdao","swaprouter"],tip:"The secondary market for the spUSD share vs WETH. The routers dump/borrow the P value here to net you out to pure N. Should sit near NAV (~$1) for clean pricing."},
+  pool:{nm:"spUSD / WETH pool",g:"ext",cl:"#f472b6",ro:"Uniswap v3 pool, 0.3%. The P-sink: where the stable leg is bought and sold for WETH.",fn:["swap"],ad:"0x8362C2A9b13e0ba770D7bFE7C2d0ae0b33B603B9",rel:["leveragerouter","flashrouter","lpzapper","trackerdao","swaprouter"],tip:"The secondary market for the spUSD share vs WETH. The routers dump/borrow the P value here to net you out to pure N. Should sit near NAV (~$1) for clean pricing. <b>There is no equivalent pool for N.</b>"},
   swaprouter:{nm:"Uniswap SwapRouter02",g:"ext",cl:"#f472b6",ro:"Executes the spUSD↔WETH swaps for the routers.",fn:["exactInputSingle"],ad:"0x3bFA4769FB09eefC5a80d6E87c3B9C650f7Ae48E",rel:["pool"],tip:"Standard Uniswap v3 router the periphery calls to trade against the pool."},
   npm:{nm:"Uniswap NPM",g:"ext",cl:"#f472b6",ro:"NonfungiblePositionManager — mints the LP NFT for the zapper.",fn:["mint"],ad:"0x1238536071E1c677A632429e3655c799b22cDA52",rel:["lpzapper","pool"],tip:"Manages full-range v3 liquidity positions for LPZapper."},
   weth:{nm:"WETH9",g:"ext",cl:"#f472b6",ro:"Wrapped ETH — the pool's quote token; routers wrap/unwrap around swaps.",fn:["deposit","withdraw"],ad:"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",rel:["pool"],tip:"The pool trades spUSD against WETH; routers unwrap back to native ETH for you."},
@@ -210,7 +211,7 @@ const C = {
 const GROUPS=[["core","Core primitive","#7dd3fc"],["factory","Factories","#a78bfa"],["wrapper","Wrapper DAO (the pegs)","#34d399"],["periphery","Periphery helpers","#a78bfa"],["desk","Trading desks (RFQ)","#22d3ee"],["ext","External (Uniswap · Balancer · Chainlink)","#f472b6"]];
 const BS="https://eth-sepolia.blockscout.com/address/";
 
-/* render map */
+/* ---- render contract map ---- */
 const map=document.getElementById('map');
 GROUPS.forEach(([g,label,cl])=>{
   const ids=Object.keys(C).filter(k=>C[k].g===g); if(!ids.length)return;
@@ -232,7 +233,7 @@ GROUPS.forEach(([g,label,cl])=>{
 });
 document.getElementById('legend').innerHTML=GROUPS.map(([g,l,cl])=>`<span><i style="background:${cl}"></i>${l}</span>`).join('');
 
-/* hover-highlight relationships */
+/* ---- hover-highlight relationships ---- */
 const cards=[...document.querySelectorAll('.cc')];
 function rel(id){const set=new Set([id]);(C[id].rel||[]).forEach(r=>set.add(r));Object.keys(C).forEach(k=>{if((C[k].rel||[]).includes(id))set.add(k);});return set;}
 cards.forEach(card=>{
@@ -241,87 +242,122 @@ cards.forEach(card=>{
 });
 
 /* ---------- price sim ---------- */
-const S=880, r=0.5; // strike, strike ratio (genesis x0 = S/r = 1760)
+const S=838, r=0.5; // live spUSD genesis: ETH $1676 * 0.5
 const px=document.getElementById('px');
 function fmt(n){return '$'+n.toLocaleString()}
 function sim(){
-  const x=+px.value;
-  const pp=Math.min(1, S/x);      // payout P fraction
-  const nn=1-pp;                   // payout N fraction
+  const x=+px.value, pp=Math.min(1,S/x), nn=1-pp;
   document.getElementById('pxv').textContent=fmt(x);
   document.getElementById('pv').textContent=pp.toFixed(3);
   document.getElementById('nv').textContent=nn.toFixed(3);
-  document.getElementById('ppbar').style.width=(pp*100)+'%';
-  document.getElementById('ppbar').textContent= pp>0.12? 'P '+pp.toFixed(2):'';
-  document.getElementById('nnbar').textContent= nn>0.12? 'N '+nn.toFixed(2):'';
+  const ppb=document.getElementById('ppbar'); ppb.style.width=(pp*100)+'%'; ppb.textContent= pp>0.12?'P '+pp.toFixed(2):'';
+  document.getElementById('nnbar').textContent= nn>0.12?'N '+nn.toFixed(2):'';
   let note;
-  if(x<=S){note=`ETH at/below the strike: <b style="color:var(--p)">P holds the full 1 ETH</b> (the peg is fully covered) and <b style="color:var(--n)">N → 0</b> (the leverage bet has expired worthless — but you only ever lost the premium, never more).`;}
-  else{const lev=(1/r).toFixed(1); note=`ETH above the strike: P caps at <b>S/x</b> while <b style="color:var(--n)">N captures the upside</b>. Near the strike a small ETH move swings N hard — that's the <b>${lev}× leverage</b>, with loss capped at what you paid and <b>no liquidation</b>.`;}
+  if(x<=S){note=`ETH at/below the strike: <b style="color:var(--p)">P holds the full 1 ETH</b> (the peg is fully covered) and <b style="color:var(--n)">N → 0</b> (the leverage bet expired worthless — but you only ever lost the premium, never more).`;}
+  else{const lev=(1/r).toFixed(1); note=`ETH above the strike: P caps at <b>S/x</b> while <b style="color:var(--n)">N captures the upside</b>. Near the strike a small ETH move swings N hard — that's the <b>${lev}× leverage</b>, loss capped at what you paid, <b>no liquidation</b>.`;}
   document.getElementById('simnote').innerHTML=note;
 }
 px.addEventListener('input',sim); sim();
 
-/* ---------- flow explorer ---------- */
-const A=(id)=>({id,nm:C[id].nm.split('  ')[0],cl:C[id].cl,as:C[id].g});
-const USER={id:'user',nm:'You',cl:'#6b8cff',as:'wallet'};
-const FLOWS={
-  lev:{label:"Standard · LeverageRouter", actors:['user','leveragerouter','trackerdao','optionseries','pool','swaprouter'],
-    steps:[
-      {a:['user','leveragerouter'],t:"You send your premium",call:"LeverageRouter.open_leverage{value: premium}(min_eth_out)",p:"You call the router with the ETH you're willing to risk and a slippage floor. One transaction — the router orchestrates the rest."},
-      {a:['leveragerouter','trackerdao'],t:"Router deposits into the peg",call:"TrackerDAO.deposit{value}()",p:"The router forwards the ETH to the spUSD DAO to enter the system at NAV."},
-      {a:['trackerdao','optionseries','oraclehub'],t:"The ETH is split into P + N",call:"OptionSeries.split()  ·  OracleHub.latest_price()",p:"The DAO splits the ETH at the active series — minting <b>P</b> and <b>N</b>. It <b>keeps the P</b> (handing the router spUSD shares at NAV) and <b>forwards the N</b> (your leverage leg) to the router. P+N=1 ETH; oracle read only for the NAV math."},
-      {a:['leveragerouter','swaprouter','pool'],t:"Sell the stable leg for ETH",call:"SwapRouter.exactInputSingle( spUSD → WETH )",p:"The router sells the spUSD shares into the <b>spUSD/WETH pool</b> for WETH. This strips out the stable value, leaving a <b>pure leveraged-long N</b> position. (This is why the pool must sit near NAV.)"},
-      {a:['leveragerouter','user'],t:"You receive N + your change",call:"→ (n_token, n_amount, eth_returned)",p:"The router unwraps the WETH and returns the <b>N leg + recovered ETH</b>. Net at-risk ≈ your premium; you now hold N: leveraged long ETH, <b>capped loss, no liquidation, no funding</b>."},
-    ]},
-  flash:{label:"Full-premium · FlashLeverageRouter", actors:['user','flashrouter','balancer','trackerdao','optionseries','pool'],
-    steps:[
-      {a:['user','flashrouter'],t:"Send exactly your premium",call:"FlashLeverageRouter.open_leverage{value: premium}(flash_amount, min_eth_out)",p:"<b>msg.value = your premium = your max loss.</b> No change comes back — your whole premium becomes the position."},
-      {a:['flashrouter','balancer'],t:"Flash-borrow the P-side",call:"BalancerVault.flashLoan([WETH], [flash_amount])",p:"The router borrows WETH (0 fee) for a single tx so it can split a larger notional than your premium alone."},
-      {a:['flashrouter','trackerdao','optionseries'],t:"Split the full notional",call:"TrackerDAO.deposit{value: premium+flash}()  →  split()",p:"Premium + flash are deposited together: bigger P + N minted. The router keeps the N for you."},
-      {a:['flashrouter','pool','balancer'],t:"Sell P, repay the flash",call:"SwapRouter( spUSD → WETH )  →  repay BalancerVault",p:"The P (spUSD) is sold into the pool for WETH; the flash loan is repaid in the same tx. Larger P sale ⇒ a bit more slippage than the standard router."},
-      {a:['flashrouter','user'],t:"Keep the N + residual",call:"→ (n_token, n_amount, eth_returned)",p:"You receive the N leg and any tiny residual. Same per-unit economics as the standard path, but your entire premium is deployed at once."},
-    ]},
-  rfq:{label:"Operator-quoted · RFQ desk", actors:['user','ndesk','optionseries','oraclehub'],
-    steps:[
-      {a:['user'],t:"Request a quote (off-chain)",call:"POST /quote { side, n_amount }",p:"The frontend asks the operator's quoter service for a price. The quoter signs an <b>EIP-712 quote</b> (price, size, deadline) with the desk's approved key. <i>No transaction yet.</i>"},
-      {a:['user','ndesk'],t:"Submit the signed quote",call:"SignedQuoteFiller.fill_buy_n{value: cost}(quote, v,r,s)",p:"You send the signed quote on-chain with exactly the quoted ETH cost. The desk is your <b>counterparty — an operator, not the protocol.</b>"},
-      {a:['ndesk','oraclehub','optionseries'],t:"Desk verifies + delivers N",call:"check sig · floor vs intrinsic · split() if needed",p:"On-chain the desk verifies the signature and that the price clears a <b>directional floor</b> computed from a fresh oracle read (so even a stolen key can't fill at a loss). It hands you N from inventory, or <b>JIT-mints</b> via split() and keeps the P. <b>No Uniswap pool touched.</b>"},
-      {a:['ndesk','user'],t:"You hold N",call:"→ n_amount",p:"You get N at the operator's quoted price. The same desk can also <b>buy your N back</b> later (fill_sell_n) — the first venue where the leverage leg is actually sellable."},
-    ]},
+/* ---------- flow explorer engine ---------- */
+const CMAP={user:{nm:"You",cl:"#6b8cff",as:"wallet"}};
+Object.keys(C).forEach(id=>CMAP[id]={nm:C[id].nm.split('  ')[0],cl:C[id].cl,as:C[id].g});
+const PHASES={
+  genesis:{nm:"Genesis",cl:"#34d399",as:"create series"},
+  trigger:{nm:"Roll trigger",cl:"#fbbf24",as:"sync()"},
+  rollauc:{nm:"Roll auction",cl:"#a78bfa",as:"fill_roll()"},
+  settle:{nm:"Settle",cl:"#7dd3fc",as:"settle()"},
+  harvest:{nm:"Harvest",cl:"#34d399",as:"sync()→ETH"},
+  reentry:{nm:"Re-entry auction",cl:"#f472b6",as:"sell_p()"},
 };
 
-let flow='lev', step=0;
-const tabs=document.getElementById('tabs');
-Object.entries(FLOWS).forEach(([k,f])=>{const b=document.createElement('div');b.className='tab'+(k===flow?' on':'');b.textContent=f.label;b.onclick=()=>{flow=k;step=0;render();};b.dataset.k=k;tabs.appendChild(b);});
-
-function actorObj(id){return id==='user'?USER:A(id);}
-function render(){
-  [...tabs.children].forEach(b=>b.classList.toggle('on',b.dataset.k===flow));
-  const f=FLOWS[flow], cur=f.steps[step];
-  // rail
-  const rail=document.getElementById('rail'); rail.innerHTML='';
-  f.actors.forEach((id,i)=>{
-    const o=actorObj(id); const on=cur.a.includes(id);
-    const el=document.createElement('div'); el.className='actor'+(on?' on':''); el.style.setProperty('--cl',o.cl);
-    el.innerHTML=`<div class="an" style="color:${on?o.cl:'#cfd6e3'}">${o.nm}</div><div class="as">${o.as}</div>`;
-    rail.appendChild(el);
-    if(i<f.actors.length-1){const a=document.createElement('div');a.className='raw';a.textContent='→';rail.appendChild(a);}
-  });
-  // dots
-  const dots=document.getElementById('dots'); dots.innerHTML='';
-  f.steps.forEach((s,i)=>{const d=document.createElement('div');d.className='d'+(i===step?' on':'');d.textContent=i+1;d.onclick=()=>{step=i;render();};dots.appendChild(d);});
-  document.getElementById('prev').disabled=step===0;
-  document.getElementById('next').disabled=step===f.steps.length-1;
-  // desc
-  document.getElementById('desc').innerHTML=`
-    <div class="st"><span class="stn">${step+1} / ${f.steps.length}</span><span class="stt">${cur.t}</span></div>
-    <div class="call">${cur.call}</div>
-    <p>${cur.p}</p>`;
+function makeExplorer(mount, flows, actorMap){
+  mount.innerHTML=`
+    <div class="tabs"></div>
+    <div class="rail"></div>
+    <div class="stepbar"><div class="dots"></div><div class="nav"><button class="btn prev">‹ Prev</button><button class="btn next">Next ›</button></div></div>
+    <div class="desc"></div>`;
+  const tabsEl=mount.querySelector('.tabs'), railEl=mount.querySelector('.rail'),
+        dotsEl=mount.querySelector('.dots'), descEl=mount.querySelector('.desc'),
+        prevB=mount.querySelector('.prev'), nextB=mount.querySelector('.next');
+  const keys=Object.keys(flows); let flow=keys[0], step=0;
+  if(keys.length<2) tabsEl.style.display='none';
+  keys.forEach(k=>{const b=document.createElement('div');b.className='tab'+(k===flow?' on':'');b.textContent=flows[k].label;b.dataset.k=k;b.onclick=()=>{flow=k;step=0;render();};tabsEl.appendChild(b);});
+  function render(){
+    [...tabsEl.children].forEach(b=>b.classList.toggle('on',b.dataset.k===flow));
+    const f=flows[flow], cur=f.steps[step];
+    railEl.innerHTML='';
+    f.actors.forEach((id,i)=>{
+      const o=actorMap[id], on=cur.a.includes(id);
+      const el=document.createElement('div'); el.className='actor'+(on?' on':''); el.style.setProperty('--cl',o.cl);
+      el.innerHTML=`<div class="an" style="color:${on?o.cl:'#cfd6e3'}">${o.nm}</div><div class="as">${o.as}</div>`;
+      railEl.appendChild(el);
+      if(i<f.actors.length-1){const a=document.createElement('div');a.className='raw';a.textContent='→';railEl.appendChild(a);}
+    });
+    dotsEl.innerHTML='';
+    f.steps.forEach((s,i)=>{const d=document.createElement('div');d.className='d'+(i===step?' on':'');d.textContent=i+1;d.onclick=()=>{step=i;render();};dotsEl.appendChild(d);});
+    prevB.disabled=step===0; nextB.disabled=step===f.steps.length-1;
+    descEl.innerHTML=`<div class="st"><span class="stn">${step+1} / ${f.steps.length}</span><span class="stt">${cur.t}</span></div><div class="call">${cur.call}</div><p>${cur.p}</p>`;
+  }
+  prevB.onclick=()=>{if(step>0){step--;render();}};
+  nextB.onclick=()=>{if(step<flows[flow].steps.length-1){step++;render();}};
+  render();
 }
-document.getElementById('prev').onclick=()=>{if(step>0){step--;render();}};
-document.getElementById('next').onclick=()=>{const f=FLOWS[flow];if(step<f.steps.length-1){step++;render();}};
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')document.getElementById('next').click();if(e.key==='ArrowLeft')document.getElementById('prev').click();});
-render();
+
+/* ---- BUY flows ---- */
+makeExplorer(document.getElementById('buyflow'), {
+  lev:{label:"Standard · LeverageRouter", actors:['user','leveragerouter','trackerdao','optionseries','pool','swaprouter'], steps:[
+    {a:['user','leveragerouter'],t:"You send your premium",call:"LeverageRouter.open_leverage{value: premium}(min_eth_out)",p:"You call the router with the ETH you're willing to risk and a slippage floor. One transaction — the router orchestrates the rest."},
+    {a:['leveragerouter','trackerdao'],t:"Router deposits into the peg",call:"TrackerDAO.deposit{value}()",p:"The router forwards the ETH to the spUSD DAO to enter the system at NAV."},
+    {a:['trackerdao','optionseries','oraclehub'],t:"The ETH is split into P + N",call:"OptionSeries.split()  ·  OracleHub.latest_price()",p:"The DAO splits the ETH at the active series — minting <b>P</b> and <b>N</b>. It <b>keeps the P</b> (handing the router spUSD shares at NAV) and <b>forwards the N</b> (your leverage leg). P+N=1 ETH; the oracle read is only for the NAV math."},
+    {a:['leveragerouter','swaprouter','pool'],t:"Sell the stable leg for ETH",call:"SwapRouter.exactInputSingle( spUSD → WETH )",p:"The router sells the spUSD shares into the <b>spUSD/WETH pool</b> for WETH. This strips out the stable value, leaving a <b>pure leveraged-long N</b> position. (This is why the pool must sit near NAV.)"},
+    {a:['leveragerouter','user'],t:"You receive N + your change",call:"→ (n_token, n_amount, eth_returned)",p:"The router unwraps the WETH and returns the <b>N leg + recovered ETH</b>. Net at-risk ≈ your premium; you now hold N: leveraged long ETH, <b>capped loss, no liquidation, no funding</b>."},
+  ]},
+  flash:{label:"Full-premium · FlashLeverageRouter", actors:['user','flashrouter','balancer','trackerdao','optionseries','pool'], steps:[
+    {a:['user','flashrouter'],t:"Send exactly your premium",call:"FlashLeverageRouter.open_leverage{value: premium}(flash_amount, min_eth_out)",p:"<b>msg.value = your premium = your max loss.</b> No change comes back — your whole premium becomes the position."},
+    {a:['flashrouter','balancer'],t:"Flash-borrow the P-side",call:"BalancerVault.flashLoan([WETH], [flash_amount])",p:"The router borrows WETH (0 fee) for a single tx so it can split a larger notional than your premium alone."},
+    {a:['flashrouter','trackerdao','optionseries'],t:"Split the full notional",call:"TrackerDAO.deposit{value: premium+flash}()  →  split()",p:"Premium + flash are deposited together: a bigger P + N is minted. The router keeps the N for you."},
+    {a:['flashrouter','pool','balancer'],t:"Sell P, repay the flash",call:"SwapRouter( spUSD → WETH )  →  repay BalancerVault",p:"The P (spUSD) is sold into the pool for WETH; the flash loan is repaid in the same tx. Larger P sale ⇒ a bit more slippage than the standard router."},
+    {a:['flashrouter','user'],t:"Keep the N + residual",call:"→ (n_token, n_amount, eth_returned)",p:"You receive the N leg and any tiny residual. Same per-unit economics as the standard path, but your entire premium is deployed at once."},
+  ]},
+  rfq:{label:"Operator-quoted · RFQ desk", actors:['user','ndesk','optionseries','oraclehub'], steps:[
+    {a:['user'],t:"Request a quote (off-chain)",call:"POST /quote { side, n_amount }",p:"The frontend asks the operator's quoter service for a price. The quoter signs an <b>EIP-712 quote</b> (price, size, deadline) with the desk's approved key. <i>No transaction yet.</i>"},
+    {a:['user','ndesk'],t:"Submit the signed quote",call:"SignedQuoteFiller.fill_buy_n{value: cost}(quote, v,r,s)",p:"You send the signed quote on-chain with exactly the quoted ETH cost. The desk is your <b>counterparty — an operator, not the protocol</b>."},
+    {a:['ndesk','oraclehub','optionseries'],t:"Desk verifies + delivers N",call:"check sig · floor vs intrinsic · split() if needed",p:"On-chain the desk verifies the signature and that the price clears a <b>directional floor</b> from a fresh oracle read (so even a stolen key can't fill at a loss). It hands you N from inventory, or <b>JIT-mints</b> via split() and keeps the P. <b>No Uniswap pool touched.</b>"},
+    {a:['ndesk','user'],t:"You hold N",call:"→ n_amount",p:"You get N at the operator's quoted price. The same desk can also <b>buy your N back</b> later — the first venue where the leverage leg is actually sellable."},
+  ]},
+}, CMAP);
+
+/* ---- EXIT flows ---- */
+makeExplorer(document.getElementById('exitflow'), {
+  sellN:{label:"Sell N (close a long)", actors:['user','ndesk','optionseries'], steps:[
+    {a:['user'],t:"You hold N — and there is no N pool",call:"(no AMM market for N exists)",p:"The leverage leg trades on no AMM. The only pre-maturity venue is the operator's <b>N desk</b> (RFQ). After maturity, you can always <code>redeem_n()</code> for the settled value — so you are never trapped."},
+    {a:['user','ndesk'],t:"Get a sell quote, submit it",call:"quoter sign → SignedQuoteFiller.fill_sell_n(quote, v,r,s)",p:"Approve your N to the desk and submit the signed quote. The desk pays you ETH at a price floored on-chain just below intrinsic (so the desk always takes a small edge)."},
+    {a:['ndesk','optionseries'],t:"Desk buys + recycles, oracle-free",call:"transferFrom(N) → OptionSeries.merge(P+N) → ETH",p:"The desk pairs your N with its inventory P and <b>merges → ETH with no oracle</b>, recovering capital instantly. This is the value-add: the first place N is actually sellable before expiry."},
+    {a:['user','optionseries'],t:"Fallback: wait for maturity",call:"OptionSeries.redeem_n(amount)",p:"If no desk is quoting, hold to maturity. After <code>settle()</code> fixes the payout, <code>redeem_n()</code> pays your N its settled ETH share — always available, no counterparty needed."},
+  ]},
+  exitSp:{label:"Exit spUSD (the stable leg)", actors:['user','trackerdao','pool','stabledesk'], steps:[
+    {a:['user','trackerdao'],t:"Instant redeem — oracle-free",call:"TrackerDAO.redeem(shares)",p:"Burn your spUSD for an <b>exact pro-rata slice</b> of the DAO's holdings: P of each live series + buffered ETH. <b>No oracle on this path</b>, so your exit can never be price-griefed. (You receive P, which you can merge or hold.)"},
+    {a:['user','pool'],t:"Or sell into the pool",call:"SwapRouter( spUSD → WETH )",p:"Sell spUSD for WETH on the <b>spUSD/WETH pool</b> at the live market price (near NAV when the pool is healthy). One swap, instant ETH."},
+    {a:['user','stabledesk'],t:"Or sell to the stable desk",call:"StableQuoteFiller.fill_sell_spusd(quote, v,r,s)",p:"Hit an operator quote — tighter than a thin pool, floored on-chain around NAV. The desk warehouses your spUSD as positive-carry inventory (its NAV accrues over time)."},
+  ]},
+  merge:{label:"Merge back to ETH", actors:['user','optionseries'], steps:[
+    {a:['user'],t:"You hold matching P and N",call:"(1 P + 1 N = 1 ETH)",p:"If you hold both legs of the same series, together they are a full unit of the locked ETH."},
+    {a:['user','optionseries'],t:"Merge → ETH, anytime, no oracle",call:"OptionSeries.merge(amount)",p:"Burn equal P + N and unlock the ETH <b>immediately, with no price feed and no fee</b>. The purest exit — entering and leaving the system is value-exact (this is one of the Halmos-proven invariants)."},
+  ]},
+}, CMAP);
+
+/* ---- LIFECYCLE ---- */
+makeExplorer(document.getElementById('lifecycle'), {
+  life:{label:"Peg lifecycle", actors:Object.keys(PHASES), steps:[
+    {a:['genesis'],t:"Genesis — the first deposit creates the active series",call:"deposit() → SeriesFactory.create_series(strike = x·r, term)",p:"The first deposit spins up the active OptionSeries at <b>strike = current index × strike ratio</b> (e.g. 0.5, the 2× setting). The DAO keeps P; the depositor takes the N. The peg is now live."},
+    {a:['trigger'],t:"Roll trigger — price nears the strike, or maturity approaches",call:"sync()   ·   x·1e18 < S·ROLL_TRIGGER   or   now+ROLL_WINDOW ≥ maturity",p:"Anyone can call <code>sync()</code>. When ETH falls toward the strike (N near worthless) or maturity enters the roll window, it <b>starts a roll</b> — creating a fresh <i>pending</i> series at a new strike, while the old one keeps running."},
+    {a:['rollauc'],t:"Roll auction — rotate exposure to the new vintage",call:"fill_roll(amount)",p:"Czar102-style <b>predictable rolling</b>: arbitrageurs deliver new-series P and take old-series P at a rate that improves linearly with time, bounded by MAX_EDGE. One-sided market-making — <b>no AMM slippage spiral</b>. The DAO's P exposure migrates to the fresh series."},
+    {a:['settle'],t:"Settle — the slow oracle fires once",call:"OptionSeries.settle()",p:"At/after the old series' maturity, anyone settles it: a <b>single Chainlink read</b> fixes the payout split forever. Worst case — the roll never fills — the old series just settles and is harvested. Tracking drift, never bad debt, never a liquidation."},
+    {a:['harvest'],t:"Harvest — settled P back to ETH",call:"sync() → redeem_p → eth_buffer",p:"<code>sync()</code> redeems the DAO's settled old-series P into ETH, parked in the <b>eth_buffer</b>. The DAO is now partly in cash, waiting to re-enter."},
+    {a:['reentry'],t:"Re-entry auction — buffer back into P",call:"sell_p(amount)",p:"The <b>re-entry auction</b>: anyone sells target-series P to the DAO for buffered ETH at oracle intrinsic, the DAO's bid ramping from a discount to a premium over AUCTION_DUR. Harvested ETH rotates back into P exposure — and the cycle <b>↻ repeats</b>."},
+  ]},
+}, PHASES);
 </script>
 </body>
 </html>
