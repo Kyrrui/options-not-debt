@@ -17,8 +17,14 @@ with a capacity constraint. **It applies to BUY N only.** Sell-N is RFQ-exclusiv
 |---|---|---|---|
 | **Buy N** (open leverage) | desk SELLS N (signed quote → `fill_buy_n`) | `LeverageRouter.open_leverage` (mints, sells the P into the spUSD/WETH 0.3% pool, returns N) | quote BOTH, execute the better effective price; if the desk can't take the size or is down → Uniswap |
 | **Sell N** (close leverage) | desk BUYS N (signed quote → `fill_sell_n`) | **none — N is in no pool** | RFQ only. If the desk can't take the size or is down → show "unavailable / try smaller / wait"; **never imply a pool route** |
-| **Buy spUSD** (Hold) | — (desk is N-only in v1) | spUSD/WETH pool, or `deposit()` mint | pool/mint only until phase-2 spUSD quoting |
-| **Sell spUSD** (Hold) | — (v1) | pool, or `redeem()` (oracle-free, pro-rata) | pool/redeem only in v1 |
+| **Buy spUSD** (Hold) | StableQuoteFiller `fill_buy_spusd` (sells from inventory) | spUSD/WETH pool, or `deposit()` mint | best of the three; surface `deposit` only on an explicit "also receive N" opt-in |
+| **Sell spUSD** (Hold) | StableQuoteFiller `fill_sell_spusd` (desk buys) | pool, or `redeem()` (oracle-free, pro-rata) | best of the three; **`redeem` is the always-available hard fallback** |
+
+> The spUSD leg now has its own RFQ desk (**StableQuoteFiller**, sibling to the N desk),
+> so spUSD is a **three-venue** leg (RFQ / pool / mint-redeem). The full routing rules,
+> venue table, and the `operatorDesks.json` `leg` discriminator are in
+> `docs/handoffs/stable-rfq-spec.md` §7. Key asymmetry vs the N leg: sell-spUSD ALWAYS has
+> a protocol fallback (`redeem`), so it is never "unavailable" — unlike sell-N.
 
 So "across the site" in v1 = **everywhere N is acquired or disposed** route through this logic:
 the Leverage tab (buy + the new sell), the Earn/Provide flow (which hands users N they'll

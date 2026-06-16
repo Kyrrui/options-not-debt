@@ -104,12 +104,17 @@ The current Leverage/Provide copy implies N is sellable today (e.g. "keep it… 
 
 ## Discovery
 
-v1: a curated `operatorDesks.json` in `@gimbal/protocol` (mirrors `certifiedPegs.json`):
+v1: a curated `operatorDesks.json` in `@gimbal/protocol` (mirrors `certifiedPegs.json`). Each
+entry carries a **`leg`** discriminator (`"N"` | `"spUSD"`) — there are now two desks per peg
+(the N/leverage desk and the spUSD/stable desk, `StableQuoteFiller`):
 ```json
-[ { "tracker":"0x…", "desk":"0x…", "operator":"0x…", "quoterPubkey":"0x…",
-    "quoterUrl":"https://…", "assetSymbol":"spUSD", "label":"…", "sinceBlock":1234 } ]
+[ { "tracker":"0x…", "leg":"N",     "desk":"0x…", "operator":"0x…", "quoterPubkey":"0x…",
+    "quoterUrl":"https://…/n",      "assetSymbol":"spUSD", "label":"spUSD leverage desk", "sinceBlock":1234 },
+  { "tracker":"0x…", "leg":"spUSD", "desk":"0x…", "operator":"0x…", "quoterPubkey":"0x…",
+    "quoterUrl":"https://…/stable", "assetSymbol":"spUSD", "label":"spUSD stable desk",   "sinceBlock":5678 } ]
 ```
-Surface only listed desks by default. (On-chain `OperatorDeskRegistry` enumeration is phase 2 — don't build against it yet.)
+Key desks by `(tracker, leg)`: the Leverage tab reads `leg:"N"`, the Hold tab reads `leg:"spUSD"`.
+Surface only listed desks by default. (On-chain `OperatorDeskRegistry` enumeration is phase 2 — don't build against it yet.) **The spUSD/Hold desk's full integration is `docs/handoffs/stable-rfq-spec.md` §7** (same trust labeling + signed-quote flow; new fills `fill_buy_spusd`/`fill_sell_spusd`).
 
 ## Coexistence with the AMM pool
 
