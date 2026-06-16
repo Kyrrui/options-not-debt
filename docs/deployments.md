@@ -111,6 +111,27 @@ and **unfunded**. Before go-live the operator must: `set_quoter(<real quoter-ser
 pre_maturity_buffer 2d; strike_proximity 1.5e18 (= spUSD `ROLL_TRIGGER`); caps 0.1 N /
 3 ETH NAV-at-risk / 1 ETH float / 2 ETH per-window.
 
+### Stable RFQ Desk — StableQuoteFiller (standalone, NOT factory-deployed)
+
+Positive-carry **sibling** to the N desk for the spUSD (P/dollar) leg — buy + sell spUSD,
+inventory-based (NO mint-to-sell), NAV-anchored floor, distinct EIP-712 domain. Reviewed
+(4 confirmed, all fixed: NAV cap in spUSD UNITS not the falling ETH-mark, saturating
+`net_spusd` + `resync_spusd`, `sp_sign` deferred) + 12/12 fork tests. Spec
+`docs/handoffs/stable-rfq-spec.md`. Deploy: `KEY=… BROADCAST=1 ./script/deploy-rfq-desk-stable.sh`.
+
+| Contract | Address |
+|---|---|
+| StableQuoteFiller (spUSD desk) | [`0x520089CCFCB62cd79971afeBB3A3EA2E973E29cc`](https://eth-sepolia.blockscout.com/address/0x520089CCFCB62cd79971afeBB3A3EA2E973E29cc) |
+
+**NOT YET LIVE — do not list in operatorDesks.json yet.** Deployed Blockscout-verified
+with **placeholder `owner = quoter = deployer`** (`0xBd4bFfe718f607ad52C30A5ECA3526306cB38e33`)
+and **unfunded**. Go-live (operator): `set_quoter(<real key>)`, seed spUSD via `fund_spusd`
+(acquire spUSD off-desk; the desk has NO mint path), `fund()` ETH for the buy side, tune
+`set_caps`, optionally `transfer_ownership`, then add the `operatorDesks.json` entry with
+`leg:"spUSD"`. Deploy params: USD-only; min_edge 1%; desk_max_staleness 3600s (mainnet
+300–600s); caps 100 spUSD/fill · 3000 spUSD-UNITS net (oracle-invariant) · 0 floats ·
+2 ETH/window outflow.
+
 **Deprecated periphery (superseded by v2 — do not list in UIs):**
 
 | Contract | Address |
