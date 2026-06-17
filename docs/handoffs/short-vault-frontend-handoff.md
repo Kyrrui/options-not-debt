@@ -39,7 +39,22 @@ Earn-side deposits, the operator can seed initial vault liquidity. The M/L legs 
   **USDC (6-dec)**. `nav()` is 18-dec "stable units" (`1e18 = 1 USDC`; divide by `SCALE()` = 1e12 for a
   USDC figure). `share_price()` is 1e18-scaled.
 
-## Earn tab — be the short house (LP side, USDC)
+## Where this lives in the nav — a short IS leverage (do NOT add a "Short" nav item)
+
+Keep the three-role nav `Hold · Leverage · Earn`. A short is a leveraged position (the down direction),
+not a separate category — so **"Short" is never a top-level sibling of "Leverage."** Both legs are leverage:
+
+- **Leverage** = a **Long ⇄ Short toggle**, one tab:
+  - **Long** (buy N): gains as ETH **rises**, ~2×, from `GimbalSimpleVault` (`simple-vault-frontend-handoff.md`).
+  - **Short** (buy M): gains as ETH **falls**, ~4×, from THIS vault (the "buy M" section below).
+- **Earn** = be the house, with a **Long house ⇄ Short house** choice (not a separate nav item):
+  - **Long house**: deposit **ETH** into `GimbalSimpleVault` (short-call — profits when ETH is flat/down).
+  - **Short house**: deposit **USDC** into THIS vault (short-put — profits when ETH is flat/up).
+
+So everything below = the **Short side of the Leverage toggle** (buyers) and the **Short house in Earn**
+(LPs). This matches short-series-spec.md §7.2 ("a Long↔Short toggle on the Leverage tab, not a new tab").
+
+## Earn tab · Short house — be the short house (LP side, USDC)
 
 The LP is the **counterparty to shorts**: they profit (premium) when ETH holds/rises and lose (capped,
 pre-funded, never liquidated) when ETH falls hard. Mirror of the long house's "be the house."
@@ -54,7 +69,7 @@ pre-funded, never liquidated) when ETH falls hard. Mirror of the long house's "b
   capped at your deposit, never liquidated. Short volatility, not a yield product. No operator/admin/pause.
   Redemptions are pro-rata in-kind (USDC + option tokens). Sepolia testnet, unaudited.*
 
-## Short tab — buy M (open a leveraged short)
+## Leverage tab · Short side — buy M (open a leveraged short)
 
 - **`quote_buy_m(uint256 amount) → uint256`** (view) — USDC (6-dec) cost to buy `amount` M (1e18).
 - **`intrinsic_m() → uint256`** (view) — live M fair value (1e18-scaled USDC per 1e18 M); show edge vs it.

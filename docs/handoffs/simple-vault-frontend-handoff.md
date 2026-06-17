@@ -26,11 +26,19 @@ It is **immutable**: no owner, no admin, no pause, no upgrade, no `withdraw`. Ev
 immutable getter — **read them on-chain, don't hardcode** (`BASE_EDGE`, `MAX_FILL`, `MAX_WRITTEN`,
 `TOTAL_DEPOSIT_CAP`, `STRIKE_PROXIMITY`, `PRE_MATURITY_BUFFER`, `DESK_MAX_STALENESS`, …).
 
+## Nav placement — this is the LONG side of Leverage (a short is also leverage)
+
+Three-role nav `Hold · Leverage · Earn`. **Leverage is a Long ⇄ Short toggle, one tab — there is no
+separate "Short" nav item** (a short is just leveraged in the down direction). This vault is the **Long**
+side; the **Short** side (buy M) is `GimbalShortVault` — see `short-vault-frontend-handoff.md`. Likewise
+**Earn** has a **Long house (ETH, this vault) ⇄ Short house (USDC, the short vault)** choice, not two nav
+items.
+
 ## Three surfaces
 
-1. **Earn tab (be the house):** `deposit()` / `redeem()` + NAV/share views. The core new product.
-2. **Leverage tab (buy N):** `quote_buy_n` → `buy_n` against the vault, an alternative to the existing
-   `LeverageRouter` pool path.
+1. **Earn tab · Long house (be the house):** `deposit()` / `redeem()` + NAV/share views. The core new product.
+2. **Leverage tab · Long side (buy N):** `quote_buy_n` → `buy_n` against the vault, an alternative to the
+   existing `LeverageRouter` pool path.
 3. **A "Refresh / harvest" affordance:** anyone may call `poke()` (permissionless keeper).
 
 ---
