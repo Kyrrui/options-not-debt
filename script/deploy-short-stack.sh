@@ -18,6 +18,9 @@ DEPLOYER=$(cast wallet address --private-key "$KEY")
 
 HUB=${HUB:-0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62}
 TOKEN_BLUEPRINT=${TOKEN_BLUEPRINT:-0x360b1f203f82f06709c5d7c9ec9d86993a3034c4}
+# Set USDC to an existing stable (e.g. Circle's verified Sepolia USDC
+# 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238) to use it as collateral and SKIP the MockUSDC deploy.
+USDC=${USDC:-}
 
 # strike K = 1.25x live ETH/USD (a ~4x short tier; p < K so immediately writable), maturity 30d out
 P=$(cast call "$HUB" 'latest_price(bytes32)(uint256)' 0x0000000000000000000000000000000000000000000000000000000000000000 --rpc-url "$RPC" | awk '{print $1}')
@@ -46,10 +49,16 @@ if [ "${BROADCAST:-0}" != "1" ]; then
   exit 0
 fi
 
-echo "== 1/3 deploy MockUSDC"
-USDC=$(forge create src/mocks/MockUSDC.vy:MockUSDC --rpc-url "$RPC" --private-key "$KEY" --broadcast \
-  | grep -oE 'Deployed to: 0x[0-9a-fA-F]{40}' | cut -d' ' -f3)
-echo "  MockUSDC: $USDC"
+USDC_DEPLOYED=0
+if [ -z "$USDC" ]; then
+  echo "== 1/3 deploy MockUSDC"
+  USDC=$(forge create src/mocks/MockUSDC.vy:MockUSDC --rpc-url "$RPC" --private-key "$KEY" --broadcast \
+    | grep -oE 'Deployed to: 0x[0-9a-fA-F]{40}' | cut -d' ' -f3)
+  echo "  MockUSDC: $USDC"
+  USDC_DEPLOYED=1
+else
+  echo "== 1/3 using existing stable: $USDC (skipping MockUSDC)"
+fi
 
 echo "== 2/3 deploy PutOptionSeries (hub, usdc, K, maturity, tokenBlueprint)"
 SERIES=$(forge create src/PutOptionSeries.vy:PutOptionSeries --rpc-url "$RPC" --private-key "$KEY" --broadcast \
@@ -68,8 +77,10 @@ echo "== verify on Blockscout"
 SERIES_ARGS=$(cast abi-encode "constructor(address,address,uint256,uint256,address)" "$HUB" "$USDC" "$K" "$MATURITY" "$TOKEN_BLUEPRINT" | sed 's/^0x//')
 VAULT_ARGS=$(cast abi-encode "constructor(address,address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)" "${VARGS[@]}" | sed 's/^0x//')
 MANIFEST=$(mktemp)
-printf '[{"address":"%s","file":"src/mocks/MockUSDC.vy","args":""},{"address":"%s","file":"src/PutOptionSeries.vy","args":"%s"},{"address":"%s","file":"src/periphery/GimbalShortVault.vy","args":"%s"}]' \
-  "$USDC" "$SERIES" "$SERIES_ARGS" "$VAULT" "$VAULT_ARGS" > "$MANIFEST"
+MOCK_ENTRY=""
+if [ "$USDC_DEPLOYED" = "1" ]; then MOCK_ENTRY=$(printf '{"address":"%s","file":"src/mocks/MockUSDC.vy","args":""},' "$USDC"); fi
+printf '[%s{"address":"%s","file":"src/PutOptionSeries.vy","args":"%s"},{"address":"%s","file":"src/periphery/GimbalShortVault.vy","args":"%s"}]' \
+  "$MOCK_ENTRY" "$SERIES" "$SERIES_ARGS" "$VAULT" "$VAULT_ARGS" > "$MANIFEST"
 python script/verify_blockscout.py "$MANIFEST" || echo "(verification submit/poll failed — re-run later with the manifest)"
 
 cat <<EOF

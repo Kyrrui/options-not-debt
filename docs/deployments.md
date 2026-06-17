@@ -165,15 +165,24 @@ USDC/put mirror of `GimbalSimpleVault`. Adversarial pre-deploy review: 14 agents
 `split_cost6` dust assert). 13/13 fork tests green. Spec: `docs/handoffs/short-series-spec.md`; frontend:
 `docs/handoffs/short-vault-frontend-handoff.md`. Deploy: `KEY=… BROADCAST=1 ./script/deploy-short-stack.sh`.
 
+**Collateral = Circle's VERIFIED Sepolia USDC** `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` (6-dec; get
+it from faucet.circle.com), NOT a mock — chosen for fidelity (real FiatToken, wallet-recognized, exercises
+the F-FREEZE blocklist/pause risk).
+
 | Contract | Address |
 |---|---|
-| **GimbalShortVault** (spUSD-less USDC short house) | [`0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254`](https://eth-sepolia.blockscout.com/address/0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254) |
-| **PutOptionSeries** (`M-USD-2177.825-…` / `L-…`) | [`0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC`](https://eth-sepolia.blockscout.com/address/0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC) |
-| └ M / L legs | `0xf405ff37A7661C7C7cd2bD6777789CFF2AC61864` / `0xe1183923908b7F0DBAEbe23c1218701f934Ee5eb` |
-| **MockUSDC** (6-dec, open faucet `mint()`) | [`0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002`](https://eth-sepolia.blockscout.com/address/0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002) |
+| **GimbalShortVault** (immutable USDC short house) | [`0xB835cB7616Ce72ee2F30486812105d30CA9533c7`](https://eth-sepolia.blockscout.com/address/0xB835cB7616Ce72ee2F30486812105d30CA9533c7) |
+| **PutOptionSeries** (`M-USD-2177.825-…` / `L-…`) | [`0xaC10cb644715A19A736a787BDE3eC0E3fb880B61`](https://eth-sepolia.blockscout.com/address/0xaC10cb644715A19A736a787BDE3eC0E3fb880B61) |
+| └ M / L legs | `0x28B45AF2688506E3Bd0766376239759e6976ED7a` / `0xA54f026cB9abf3444AfBBE610443aE4593b57087` |
+| Circle USDC (collateral) | [`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`](https://eth-sepolia.blockscout.com/address/0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238) |
 
-**LIVE + Blockscout-verified, UNFUNDED (`totalSupply`=0).** Go-live = anyone `mint()`s MockUSDC →
-`deposit()` → `buy_m()`; `poke()` is the permissionless keeper. Immutable params (frozen): USD-only; strike
+*(Superseded MockUSDC-backed first cut — vault `0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254`, series
+`0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC`, MockUSDC `0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002` —
+left verified but do not list; redeployed against Circle USDC for fidelity. `src/mocks/MockUSDC.vy` stays
+for local/fork testing only.)*
+
+**LIVE + Blockscout-verified, UNFUNDED (`totalSupply`=0).** Go-live = LPs get Circle USDC →
+`deposit()` → buyers `buy_m()`; `poke()` is the permissionless keeper. Immutable params (frozen): USD-only; strike
 K≈$2,177.83 (~4× tier, set 1.25× spot at deploy); 30-day maturity; base_edge 2%; staleness 3600s;
 pre_maturity_buffer 2d; strike_proximity 0.95e18 (FLIPPED sub-UNIT band); caps 500 M/fill · 5000 M written ·
 2000 M/window · 500 M/block · 50,000 USDC gross-deposit. **Immutable BY CHOICE for Sepolia — do NOT deploy

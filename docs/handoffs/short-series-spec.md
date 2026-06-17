@@ -3,9 +3,10 @@
 > **⤳ Unified into [`autonomous-vault-spec.md`](autonomous-vault-spec.md)** — the crowd-owned immutable end-state folds this in. This doc stays the detail for its piece; the master holds the architecture + the **GO/NO-GO** (prove demand on the *pausable* operated desks first, then freeze immutable — immutability is a one-way door).
 
 > **✅ SHIPPED (Sepolia), built the OWNERLESS way.** The put primitive + an ownerless venue are live:
-> [`PutOptionSeries`](../../src/PutOptionSeries.vy) `0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC` +
-> [`GimbalShortVault`](../../src/periphery/GimbalShortVault.vy) `0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254`
-> (USDC `0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002`). **NOTE: §3.3's operated `ShortQuoteFiller` was NOT
+> [`PutOptionSeries`](../../src/PutOptionSeries.vy) `0xaC10cb644715A19A736a787BDE3eC0E3fb880B61` +
+> [`GimbalShortVault`](../../src/periphery/GimbalShortVault.vy) `0xB835cB7616Ce72ee2F30486812105d30CA9533c7`
+> (collateral = Circle's VERIFIED Sepolia USDC `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238`; the earlier
+> MockUSDC-backed cut is superseded). **NOTE: §3.3's operated `ShortQuoteFiller` was NOT
 > built** — it predates Kyle's "no operated desks" decision. The trading venue is instead the immutable,
 > ownerless `GimbalShortVault` (USDC/put mirror of `GimbalSimpleVault`): on-chain formulaic price (no signer/
 > owner), Earn-funded, in-kind oracle-free redeem, permissionless `poke()`. Frontend handoff:

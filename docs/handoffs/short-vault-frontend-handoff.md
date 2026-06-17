@@ -19,16 +19,18 @@ MockUSDC, deposits to the vault, and buys M. Build against the ABI now.
 
 | What | Address |
 |---|---|
-| **GimbalShortVault** (the short house) | `0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254` |
-| **PutOptionSeries** (the series it writes) | `0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC` |
-| **MockUSDC** (6-dec collateral, open faucet) | `0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002` |
+| **GimbalShortVault** (the short house) | `0xB835cB7616Ce72ee2F30486812105d30CA9533c7` |
+| **PutOptionSeries** (the series it writes) | `0xaC10cb644715A19A736a787BDE3eC0E3fb880B61` |
+| **USDC** (Circle's VERIFIED Sepolia USDC, 6-dec collateral) | `0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238` |
 | OracleHub | `0x2993760Eda4B5249FB827A90724e9DBC5A94Ee62` |
 
 Strike `K` ≈ **$2,177.83** (set 25% above spot at deploy → a ~**4× short tier**), 30-day maturity. The
 vault is **immutable**: no owner/admin/pause/upgrade/withdraw; read every cap from its public getters.
 
-**Test USDC:** `MockUSDC.mint(to, amount)` is an **open faucet** (anyone mints any amount, 6-dec). Give
-users a "Get test USDC" button calling it. (Mainnet uses real USDC — see caveats.)
+**Test USDC:** collateral is **Circle's real verified Sepolia USDC** — users get it from
+**faucet.circle.com** (rate-limited; fine for buy-side premiums which are only a few USDC). For larger
+Earn-side deposits, the operator can seed initial vault liquidity. The M/L legs are at
+`ISeries(series).M()` / `.L()`.
 
 ## Units (read carefully — this leg mixes 6-dec USDC and 18-dec legs)
 
@@ -92,8 +94,8 @@ harvests L → USDC. No funds move to the caller.
   blocks deposit too — but **redeem never touches the oracle**, so the exit always works.
 
 ## Mainnet caveats (carry in the UI; full list in short-series-spec.md)
-- **MockUSDC is a testnet faucet token**, not real USDC. Mainnet locks real USDC (issuer freeze/blocklist
-  risk, F-FREEZE; no oracle-free ETH fallback).
+- Collateral is **Circle's Sepolia USDC** (a real FiatToken). Mainnet locks mainnet USDC — same issuer
+  freeze/blocklist risk (F-FREEZE; no oracle-free ETH fallback) — surface it in the Short tab.
 - **Dead-oracle (F-DEAD-ORACLE):** if the feed dies before settlement, the series' locked USDC slice is
   stranded as un-settleable L until the feed revives (the vault itself never bricks — redeem stays open).
   Mainnet needs a hardened `settle_fallback`.
