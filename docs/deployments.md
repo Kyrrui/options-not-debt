@@ -155,6 +155,31 @@ written · 1 ETH/window · 0.5 ETH/block · 10 ETH gross-deposit (lifetime, not 
 BY CHOICE for the Sepolia research phase — do NOT deploy as-is to mainnet (see the spec's MAINNET
 CHECKLIST: timelock guardian, hardened settle/dead-oracle, epochs, Halmos+audit, legal entity, …).**
 
+### Debt-free SHORT stack (P1) — PutOptionSeries + GimbalShortVault (immutable, ownerless)
+
+The leveraged ETH **short**: lock USDC → M (gains as ETH falls) + L (covered), M+L=1 stable, max loss =
+premium, no liquidation. Built to the **ownerless** architecture (NOT the spec's operated `ShortQuoteFiller`
+— that predates the no-operated-desks decision): the trading venue is the immutable `GimbalShortVault`, the
+USDC/put mirror of `GimbalSimpleVault`. Adversarial pre-deploy review: 14 agents, 4 findings (all low/info),
+**DEPLOY-AS-IS**; two one-line polish fixes applied pre-freeze (VYP-01 `merge` dust guard, VYP-02 vault
+`split_cost6` dust assert). 13/13 fork tests green. Spec: `docs/handoffs/short-series-spec.md`; frontend:
+`docs/handoffs/short-vault-frontend-handoff.md`. Deploy: `KEY=… BROADCAST=1 ./script/deploy-short-stack.sh`.
+
+| Contract | Address |
+|---|---|
+| **GimbalShortVault** (spUSD-less USDC short house) | [`0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254`](https://eth-sepolia.blockscout.com/address/0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254) |
+| **PutOptionSeries** (`M-USD-2177.825-…` / `L-…`) | [`0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC`](https://eth-sepolia.blockscout.com/address/0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC) |
+| └ M / L legs | `0xf405ff37A7661C7C7cd2bD6777789CFF2AC61864` / `0xe1183923908b7F0DBAEbe23c1218701f934Ee5eb` |
+| **MockUSDC** (6-dec, open faucet `mint()`) | [`0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002`](https://eth-sepolia.blockscout.com/address/0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002) |
+
+**LIVE + Blockscout-verified, UNFUNDED (`totalSupply`=0).** Go-live = anyone `mint()`s MockUSDC →
+`deposit()` → `buy_m()`; `poke()` is the permissionless keeper. Immutable params (frozen): USD-only; strike
+K≈$2,177.83 (~4× tier, set 1.25× spot at deploy); 30-day maturity; base_edge 2%; staleness 3600s;
+pre_maturity_buffer 2d; strike_proximity 0.95e18 (FLIPPED sub-UNIT band); caps 500 M/fill · 5000 M written ·
+2000 M/window · 500 M/block · 50,000 USDC gross-deposit. **Immutable BY CHOICE for Sepolia — do NOT deploy
+as-is to mainnet** (real USDC + F-FREEZE; hardened `settle_fallback` for the dead-oracle trap; epochs;
+Halmos+audit; spUSD soft-short + P2 tiers — see the spec's MAINNET CHECKLIST).
+
 **Deprecated periphery (superseded by v2 — do not list in UIs):**
 
 | Contract | Address |

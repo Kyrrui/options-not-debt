@@ -2,6 +2,18 @@
 
 > **⤳ Unified into [`autonomous-vault-spec.md`](autonomous-vault-spec.md)** — the crowd-owned immutable end-state folds this in. This doc stays the detail for its piece; the master holds the architecture + the **GO/NO-GO** (prove demand on the *pausable* operated desks first, then freeze immutable — immutability is a one-way door).
 
+> **✅ SHIPPED (Sepolia), built the OWNERLESS way.** The put primitive + an ownerless venue are live:
+> [`PutOptionSeries`](../../src/PutOptionSeries.vy) `0xa9Eac5413C3058224DCbCa676FEB0C7b47a31FcC` +
+> [`GimbalShortVault`](../../src/periphery/GimbalShortVault.vy) `0xf9b268eB464178349Bd81BbCAcc3EC771d0C6254`
+> (USDC `0x31B7d96A5C8ab4d91077873e61aFaBCFE11E5002`). **NOTE: §3.3's operated `ShortQuoteFiller` was NOT
+> built** — it predates Kyle's "no operated desks" decision. The trading venue is instead the immutable,
+> ownerless `GimbalShortVault` (USDC/put mirror of `GimbalSimpleVault`): on-chain formulaic price (no signer/
+> owner), Earn-funded, in-kind oracle-free redeem, permissionless `poke()`. Frontend handoff:
+> [`short-vault-frontend-handoff.md`](short-vault-frontend-handoff.md). 14-agent pre-deploy review =
+> DEPLOY-AS-IS (4 low/info; VYP-01/VYP-02 dust guards applied pre-freeze); 13/13 fork tests. F-DEC (6-dec
+> round-down), F-BAND (flipped band), F-DEFAULT (no payable default) all implemented + verified. The §3.3
+> operated-desk design and the spUSD soft-short remain as written for reference / mainnet phases only.
+
 > Build spec, not a sketch. A **new core primitive** — `PutOptionSeries.vy` — that is the algebraic **mirror** of the deployed call primitive (`OptionSeries.vy`), plus a `PutSeriesFactory.vy` and a **third RFQ desk sibling**, `ShortQuoteFiller.vy`, alongside the live `SignedQuoteFiller` (N leg, Sepolia `0x48c93eD52507DEe37d79eA37Df9ed7fAF739C8F1`) and `StableQuoteFiller` (spUSD leg). It gives Gimbal a **debt-free leveraged SHORT on ETH**: lock **1 stable unit** → mint **M + L**, get the **M** leg that **gains as ETH falls**, with **max loss = the premium paid, NO liquidation, NO margin, fully collateralized by construction.** It is the mirror of the leveraged LONG (the N leg) and *doubles* the product. P1 in `docs/handoffs/split-derived-roadmap.md`.
 >
 > It reuses everything: `OptionSeries`'s split/merge/lazy-one-shot-settle/redeem machinery (mirrored), the `SeriesFactory` blueprint/dedupe pattern, the `OracleHub` ETH/USD read, and the N/stable desks' EIP-712 + G1–G6 guardrail skeleton — generalized by the same *subtraction* the dated `SeriesQuoteFiller` uses (`leverage-menu-spec.md §3.3`), not copied verbatim.
