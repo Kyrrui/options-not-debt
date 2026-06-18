@@ -1,5 +1,12 @@
 # Gimbal P2 — Leverage-tier menu (multi-strike dated series) (spec)
 
+> **⤳ SUPERSEDED for the venue by [`leverage-menu-ownerless-spec.md`](leverage-menu-ownerless-spec.md).**
+> This doc's trading venue (operated `SeriesQuoteFiller` desks with an owner/quoter/signer) is DEAD — Kyle
+> killed operated desks. The current P2 design builds the menu from **ownerless single-series tier-vaults**
+> (`GimbalShortVault` verbatim for shorts + a new `GimbalDatedCallVault` for longs), curated-deploy now /
+> param-enforcing-factory later, never a multi-series menu vault. The **leverage math, tier grid, and 20×
+> ceiling reasoning here remain valid** — only the venue changed. Read the ownerless spec for the build.
+
 > **⤳ Unified into [`autonomous-vault-spec.md`](autonomous-vault-spec.md)** — the crowd-owned immutable end-state folds this in. This doc stays the detail for its piece; the master holds the architecture + the **GO/NO-GO** (prove demand on the *pausable* operated desks first, then freeze immutable — immutability is a one-way door).
 
 > Build spec, not a sketch. **P2** of `split-derived-roadmap.md`. A **leverage market** layer that
